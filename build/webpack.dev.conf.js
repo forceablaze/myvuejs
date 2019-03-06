@@ -1,6 +1,7 @@
 const path = require('path')
 const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const { VueLoaderPlugin } = require('vue-loader');
 
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
@@ -44,14 +45,23 @@ module.exports = {
         loader: 'babel-loader',
         include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client')]
       },
+      {
+        test: /\.styl$/,
+        loader: 'stylus-loader'
+      },
+      {
+        test: /\.css$/,
+        loader: 'style-loader!css-loader'
+      },
     ]
   },
 
   plugins: [
     new HtmlWebpackPlugin({
-        filename: 'index.html',
-		template: 'index.html',
-		inject: true,
-    })
+      filename: 'index.html',
+      template: 'index-template.html',
+      inject: true,
+    }),
+    new VueLoaderPlugin()
   ]
 }

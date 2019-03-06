@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
-from .serializers import FileSerializer, FileListSerializer
+from .serializers import FileSerializer
 from .models import File
 
 from rest_framework.renderers import JSONRenderer
