@@ -1,3 +1,4 @@
 Django
 uwsgi
 django-rest-framework
+celery

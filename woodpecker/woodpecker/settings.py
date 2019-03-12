@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'cvlog',
     'file',
     'pecker',
+    'tests',
 ]
 
 MIDDLEWARE = [
