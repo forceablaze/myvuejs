@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     url('api/', include('cvlog.urls',  namespace = 'cvlog')),
     url('api/', include('file.urls',  namespace = 'file')),
+    url('api/', include('pecker.urls',  namespace = 'pecker')),
 ]
 
 if settings.DEBUG:

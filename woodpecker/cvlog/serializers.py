@@ -11,7 +11,7 @@ class LogListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Log
-        field = ('id', 'logtype', 'logsize', 'uploaded_at')
+        fields = ('id', 'logtype', 'logsize', 'uploaded_at')
 
 class LogSerializer(serializers.ModelSerializer):
 
@@ -23,4 +23,4 @@ class LogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Log
-        field = ('id', 'logtype', 'logsize', 'uploaded_at')
+        fields = ('id', 'logtype', 'logsize', 'uploaded_at')
