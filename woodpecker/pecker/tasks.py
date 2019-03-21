@@ -106,14 +106,13 @@ def pecker_exec(self, log_id = None):
     try:
         f = open(outputFilePath, 'r')
         logObj = json.load(f)
+        f.close()
     except ValueError:
         print('JSON file format error')
         peckerTask.status = PeckerTaskStatusToString(PeckerTaskStatus.FAILED)
     except FileNotFoundError:
         print('{} not found.'.format(outputFilePath))
         peckerTask.status = PeckerTaskStatusToString(PeckerTaskStatus.FAILED)
-
-    f.close()
 
     #cvlog = createCVLog(fileStatus, logObj)
     #cvlog.save()
