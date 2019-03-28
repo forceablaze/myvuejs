@@ -22,7 +22,7 @@
             <v-list-tile-title>Upload Log</v-list-tile-title>
           </v-list-tile-content>
         </v-list-tile>
-        <v-list-tile @click="navigatePage('log')">
+        <v-list-tile @click="navigatePage('log_list')">
           <v-list-tile-action>
             <v-icon>list</v-icon>
           </v-list-tile-action>
@@ -54,6 +54,7 @@
 
 import UploadFileDialog from '@/components/UploadFileDialog'
 import ProcessProgress from '@/components/ProcessProgress'
+import { delay } from '@/utils'
 
 export default {
 
@@ -72,15 +73,57 @@ export default {
     upload_log() {
       this.$refs.upload_dialog.open()
     },
-    onUploadSuccess(e) {
-      this.refs.processProgress.hide()
+
+    retrieveTaskStatus(task_id) {
+      console.log(task_id)
+      delay(5000)('retry').then((result) => {
+        console.log(task_id)
+
+        this.axios.get('/pecker/' +  task_id)
+        .then(response => {
+          // Automatic transforms for JSON data
+          console.log(response.data.status)
+          if(response.data.status == 'running') {
+            this.retrieveTaskStatus(task_id)
+          }
+          else {
+            this.$refs.processProgress.hide()
+          }
+        })
+        .catch(error => {
+          console.log(error)
+        });
+      });
     },
+
+    onUploadSuccess(data) {
+      console.log('log_id:' + data.id)
+
+      this.$refs.processProgress.hide()
+
+      this.axios.post('/pecker/', {
+        log_id: data.id
+      })
+      .then(response => {
+        console.log(response.data)
+        this.retrieveTaskStatus(response.data.task_id)
+      })
+      .catch(error => {
+        console.log(error)
+      });
+
+      this.showProgressBar('Analyzing')
+    },
+
     onUploadFailed(e) {
       console.log(e)
+      this.$refs.processProgress.hide()
     },
+
     onUploading(e) {
       this.showProgressBar('Uploading')
     },
+
     showProgressBar(status) {
       this.progressStatus = status
       this.$refs.processProgress.show()

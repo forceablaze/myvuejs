@@ -6,14 +6,12 @@
       <v-btn @click="none">none</v-btn>
 
       <v-flex>
-        <v-card dark color="primary">
-          <v-card-text>one</v-card-text>
-        </v-card>
-      </v-flex>
-
-      <v-flex>
         <v-expansion-panel v-model="panel" expand>
-          <log-component v-for="(log, index) in logs" :key="index"></log-component>
+          <log-component
+            v-for="(log, index) in logs"
+            :key="index"
+            :log="log">
+          </log-component>
         </v-expansion-panel>
       </v-flex>
     </v-layout>
@@ -29,13 +27,25 @@ export default {
     return {
       logs: [],
       panel: [],
-      count: 0
+      count: 0,
+      log_obj: {},
+      log: {}
+    }
+  },
+
+  props: ['log_id'],
+
+  watch: {
+    '$route' (to, from) {
+      console.log(to)
+      console.log(from)
     }
   },
   methods: {
     add() {
       this.count++
       console.log('add')
+      console.log(this.log_id)
       this.logs.push({
         id: this.count
       })
@@ -48,6 +58,24 @@ export default {
       this.panel = []
     }
   },
+
+  mounted() {
+    console.log('fetch cvlog')
+    this.axios.post('/pecker/cvlog', {
+      log_id: this.log_id
+    })
+    .then(response => {
+      // Automatic transforms for JSON data
+      this.log_obj = response.data
+      this.logs = this.log_obj.logs
+      console.log(this.log_obj.product)
+      console.log(this.log_obj.serial_number)
+    })
+    .catch(error => {
+      console.log(error)
+    });
+  },
+
 
   components: {
     LogComponent
