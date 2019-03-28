@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "babel-node build-webpack/devServer.js",
     "test": "babel-node build-webpack/test.js",
+    "uwsgi": "uwsgi --chdir woodpecker uwsgi.ini",
     "webpack": "webpack-dev-server --inline --progress --config build-webpack/webpack.dev.conf.js"
   },
   "repository": {

@@ -3,3 +3,4 @@ uwsgi
 django-rest-framework
 celery
 django-cors-headers
+django-celery-results
