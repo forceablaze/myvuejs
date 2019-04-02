@@ -36,7 +36,7 @@ let createRouter = () => {
           component: LogList
         },
         {
-          path: ':log_id',
+          path: ':task_id',
           name: 'log_view',
           props: true,
           component: LogViewContainer

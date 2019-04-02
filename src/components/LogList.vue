@@ -3,6 +3,7 @@
     <log-profile v-for="(profile, index) in profiles"
       :profile="profile"
       :key="index"
+      :iconColor="profile.iconColor"
       @click="onProfileClick"></log-profile>
   </v-list>
 </template>
@@ -17,55 +18,85 @@ export default {
       profiles: [],
       count: 0,
       loading: true,
-      profileObjs: {}
+
+      logProfileObjs: {},
+      peckerTaskObjs: {},
     }
   },
 
   methods: {
-    add() {
-      this.count++
-      this.profiles.push({
-        id: this.count,
-        title: 'Title' + this.count,
-        subtitle: 'subtitle' + this.count
-      })
+    onProfileClick(task_id) {
+      console.log(task_id)
+      this.$router.push({ name: 'log_view', params: { task_id: task_id }})
     },
-    onProfileClick(id) {
-      console.log(id)
-      this.$router.push({ name: 'log_view', params: { log_id: id }})
+
+    checkTaskIconType(taskStatus) {
+      if(taskStatus == 'running')
+        return { 'type': 'loop', 'color': 'grey' }
+      else if(taskStatus == 'success')
+        return { 'type': 'done', 'color': 'green' }
+      else if(taskStatus == 'failed')
+        return { 'type': 'error', 'color': 'red' }
+      return { 'type': 'error', 'color': 'red' }
+    },
+
+    findLogProfile(log_id) {
+      return this.logProfileObjs.find((element) => {
+        return element.id == log_id
+      })
     }
   },
 
+  computed: {
+  },
+
   watch: {
-    profileObjs: function(newProfiles) {
-
-      if(newProfiles === undefined)
-        return
-
-      newProfiles.forEach((profile) => {
-        this.profiles.push({
-          id: profile.id,
-          title: profile.file,
-          subtitle: profile.timestamp
-        })
-      })
-    },
-
     '$route' (to, from) {
       console.log(to)
       console.log(from)
     }
   },
 
-  mounted() {
-    this.axios.get('/file/')
-    .then(response => {
+  async mounted() {
+
+    try {
+      const response = await this.axios.get('/file/')
       // Automatic transforms for JSON data
-      this.profileObjs = response.data
-    })
-    .catch(error => {
+      this.logProfileObjs = response.data
+
+    } catch(error) {
       console.log(error)
-    });
+    }
+
+    try {
+      const response = await this.axios.get('/pecker/')
+      this.peckerTaskObjs = response.data
+
+      this.peckerTaskObjs.sort((x, y) => {
+        let xDate = new Date(x.timestamp)
+        let yDate = new Date(y.timestamp)
+        
+        // the first the newest
+        return yDate - xDate
+      })
+
+      this.peckerTaskObjs.forEach((task) => {
+        let logProfile = this.findLogProfile(task.log_id)
+        let { type, color } = this.checkTaskIconType(task.status)
+
+        this.profiles.push({
+          id: task.task_id,
+          title: logProfile.file,
+          file_size: logProfile.file_size,
+          timestamp: logProfile.timestamp,
+          iconType: type,
+          iconColor: color
+        })
+      })
+
+    } catch(error) {
+      console.log(error)
+    }
   },
 
   components: {

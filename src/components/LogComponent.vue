@@ -1,92 +1,159 @@
 <template>
   <v-expansion-panel-content>
     <template v-slot:header>
-      <div>{{ 'Index: ' + log.index + '    position: 0x' + log.position }}</div>
+      <v-flex>
+        <v-layout row>
+          <v-flex d-flex xs1 style="font-size: 18px;">
+            <span>{{ log.index }}</span>
+          </v-flex>
+          <v-divider vertical></v-divider>
+
+          <v-flex d-flex style="width: 100px;"> 
+            <span>{{ log.time }}</span>
+          </v-flex>
+          <v-divider vertical></v-divider>
+
+          <v-flex d-flex style="width: 200px"> 
+            <span>{{ log.apitype }}</span>
+          </v-flex>
+
+          <v-divider vertical></v-divider>
+
+          <v-flex d-flex style="width: 100px"> 
+            <span>{{ log.flag }}</span>
+          </v-flex>
+
+          <v-divider vertical></v-divider>
+
+          <v-flex d-flex style="width: 100px"> 
+            <span>{{ log.direction }}</span>
+          </v-flex>
+
+          <v-divider vertical></v-divider>
+
+          <v-flex d-flex style="width: 100px"> 
+            <span>{{ log.logid }}</span>
+          </v-flex>
+          <v-divider vertical></v-divider>
+
+          <v-flex d-flex xs12> 
+            <span>{{ formatted_text }}</span>
+          </v-flex>
+        </v-layout>
+      </v-flex>
     </template>
 
-    <v-layout row wrap><v-flex xs6>raw</v-flex><v-flex xs6><v-switch></v-switch></v-flex></v-layout>
     <v-layout row>
 
     <v-layout column>
 
+    <v-flex d-flex sm2>
     <v-layout row>
       <v-flex xs12 d-flex>
-        <v-card dark tile flat color="red darken-2">
-          <v-card-text>{{ log.index }}</v-card-text>
-        </v-card>
-        <v-card dark tile flat color="deep-orange lighten-1">
-          <v-card-text>{{ log.position }}</v-card-text>
-        </v-card>
-        <v-card dark tile flat color="deep-orange darken-3">
-          <v-card-text>{{ log.time }}</v-card-text>
-        </v-card>
-        <v-card dark tile flat color="deep-orange">
+        <v-card style="background-color:#88FFFF; max-width: 200px">
           <v-card-text>{{ log.logtype }}</v-card-text>
         </v-card>
-        <v-card dark tile flat color="deep-orange darken-3">
+        <v-card
+          style="background-color:#88FFFF;"
+        >
+
           <v-card-text>{{ log.loglevel }}</v-card-text>
         </v-card>
-      </v-flex>
-    </v-layout>
+        <v-card
+          style="background-color:#88FFFF;"
+        >
 
-    <v-layout row>
-      <v-flex xs12 d-flex>
-        <v-card dark tile flat color="red lighten-1">
-          <v-card-text>{{ log.apitype }}</v-card-text>
+          <v-card-text>{{ 'logid: ' + log.logid }}</v-card-text>
         </v-card>
-        <v-card dark tile flat color="red lighten-2">
-          <v-card-text>{{ log.logid }}</v-card-text>
-        </v-card>
-        <v-card dark tile flat color="red darken-1">
+        <v-card
+          style="background-color:#88FFFF;"
+        >
           <v-card-text>{{ log.usage }}</v-card-text>
         </v-card>
+
+        <v-card
+          style="background-color:#88FFFF;"
+        >
+          <v-card-text>{{ payload_size_info }}</v-card-text>
+        </v-card>
+
       </v-flex>
     </v-layout>
+    </v-flex>
 
+    <v-flex d-flex sm2>
     <v-layout row>
       <v-flex xs12 d-flex>
-        <v-card dark tile flat color="red lighten-1">
-          <v-card-text>{{ log.own_domain + '/' + log.own_subsys }}</v-card-text>
+        <v-card
+          style="background-color:#13EEFF; font-size:18px;"
+        >
+          <v-card-text>{{ 'OwnID: ' + log.own_domain + '/' + log.own_subsys }}</v-card-text>
         </v-card>
-        <v-card dark tile flat color="red lighten-2">
+        <v-card
+          style="background-color:#13EEFF; font-size:18px;"
+        >
+
           <v-card-text style="max-width: 100%; word-wrap: break-word;">
-            {{ log.dest_domain + '/' + log.dest_subsys }}
+            {{ 'DestID: ' + log.dest_domain + '/' + log.dest_subsys }}
           </v-card-text>
         </v-card>
-        <v-card dark tile flat color="red darken-1">
-          <v-card-text>{{ log.task_domain + '/' + log.task_subsys }}</v-card-text>
+        <v-card
+          style="background-color:#13EEFF; font-size:18px;"
+        >
+
+          <v-card-text>{{ 'TaskID: ' + log.task_domain + '/' + log.task_subsys }}</v-card-text>
         </v-card>
       </v-flex>
     </v-layout>
-    <v-card>
+    </v-flex>
+
+    <v-flex d-flex>
+    <v-card style="background-color: #EEFFFF; font-size: 24px;">
       <v-card-text>
-        {{ log.text }}
+        {{ text }}
       </v-card-text>
     </v-card>
+    </v-flex>
 
     </v-layout>
 
-    <v-flex d-flex xs12 sm6 md3>
+    <v-flex d-flex style="max-width: 6%;">
       <v-layout row wrap>
         <v-flex>
-          <v-card color="red lighten-2" dark>
-            <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ log.flag }}</v-card-text>
-          </v-card>
-          <v-card color="red lighten-2" dark>
+          <v-card
+            style="background-color: #DDFFFF;"
+          >
             <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ log.dest }}</v-card-text>
           </v-card>
-          <v-card color="red lighten-2" dark>
+
+          <v-card
+            style="background-color: #DDFFFF;"
+          >
             <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ log.format }}</v-card-text>
           </v-card>
-          <v-card color="red lighten-2" dark>
-            <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ log.direction }}</v-card-text>
-          </v-card>
-          <v-card color="red lighten-2" dark>
-            <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ log.cputype }}</v-card-text>
-          </v-card>
-          <v-card color="red lighten-2" dark>
+
+
+          <v-card
+            style="background-color: #DDFFFF;"
+          >
             <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ log.seq }}</v-card-text>
           </v-card>
+
+          <v-card
+            style="background-color: #DDFFFF;"
+          >
+            <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ log.cputype }}</v-card-text>
+          </v-card>
+
+          <v-card
+            style="background-color: #DDFFFF;"
+          >
+            <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ '0x' + log.position }}</v-card-text>
+          </v-card>
+          <v-switch
+            v-model="showRaw"
+            style="background-color: #EEEEEE;"
+            label="生データ"></v-switch>
         </v-flex>
       </v-layout>
     </v-flex>
@@ -98,11 +165,84 @@
 
 </template>
 
+<style>
+.v-expansion-panel__header {
+  background-color: #CBFFD3;
+  padding: 0px 0px 0px 0px;
+  min-height: 0px;
+}
+.v-label {
+  font-size: 12px;
+}
+
+.v-input__slot {
+  margin: auto;
+}
+
+.v-messages {
+  min-height: 0px;
+  min-width: 0px;
+}
+
+.v-input--selection-controls {
+  margin: auto;
+  padding-top: 0px;
+}
+
+.v-input--selection-controls:not(.v-input--hide-details) .v-input__slot {
+  margin-bottom: 0px;
+}
+
+</style>
+
+
 <script>
 export default {
   name: 'log-component',
 
-  props: ['log']
+  data() {
+    return {
+      showRaw: false,
+      raw: ''
+    }
+  },
+
+  props: ['log'],
+
+  mounted() {
+  },
+
+  computed: {
+    'text' () {
+      if(this.showRaw) {
+        if(this.raw == '')
+          this.log.raw.forEach((record) => {
+            record.forEach((data) => {
+              this.raw += data
+            })
+          })
+
+        return this.raw
+      }
+      return this.formatted_text
+    },
+    'formatted_text' () {
+      if(this.log.format == 'binary') {
+        return this.log.formatted_text
+      }
+      else if(this.log.foramt = 'text') {
+        return this.log.text
+      }
+    },
+    'payload_size_info' () {
+      let str = 'payload size:' + this.log.payload_len
+
+      if(this.log.format == 'binary')
+        str += ' (binary data size: ' + this.log.binary_data_len + 'B)'
+
+      return str
+    }
+  }
 }
 
 </script>
