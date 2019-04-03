@@ -4,7 +4,10 @@ const express = require('express');
 const middleware = require('webpack-dev-middleware');
 const hotMiddleware = require('webpack-hot-middleware');
 
-const config = require('./webpack.dev.conf.js');
+const configPromise = require('./webpack.dev.conf.js');
+
+configPromise.then((config) => {
+
 const app = express();
 const compiler = webpack(config);
 
@@ -28,4 +31,7 @@ module.exports = app.listen(port, function (err) {
     return
   }
   console.log('Listening at http://localhost:' + port + '\n')
+})
+
+
 })

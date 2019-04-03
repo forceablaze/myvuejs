@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "babel-node build-webpack/devServer.js",
-    "test": "babel-node build-webpack/test.js",
+    "dev": "babel-node build/devServer.js",
     "uwsgi": "uwsgi --chdir woodpecker uwsgi.ini",
-    "webpack": "webpack-dev-server --inline --progress --config build-webpack/webpack.dev.conf.js"
+    "webpack": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js"
   },
   "repository": {
     "type": "git",
