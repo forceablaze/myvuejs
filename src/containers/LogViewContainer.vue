@@ -79,12 +79,12 @@ export default {
     }
   },
 
-  props: ['task_id'],
+  props: ['task_id', 'page'],
 
   watch: {
     '$route' (to, from) {
-      console.log(to)
-      console.log(from)
+      console.log(to.params.page)
+      this.fetchLog()
     }
   },
   methods: {
@@ -98,18 +98,24 @@ export default {
 
     fetchForwardLog() {
       console.log('fetch forward')
-      this.currentPageIndex += 1
-      this.fetchLog()
+      this.$router.push({ name: 'log_view',
+        params: {
+          task_id: this.task_id,
+          page: parseInt(this.page) + 1
+        }})
     },
 
     fetchBackLog() {
       console.log('back forward')
-      this.currentPageIndex -= 1
-      this.fetchLog()
+      this.$router.push({ name: 'log_view',
+        params: {
+          task_id: this.task_id,
+          page: parseInt(this.page) - 1
+        }})
     },
 
     fetchLog() {
-      let from = this.currentPageIndex * 50
+      let from = (this.page - 1) * 50
 
       console.log('fetch log ' + from)
 
@@ -118,6 +124,10 @@ export default {
         from: from,
       })
       .then(response => {
+        // relese obj
+        this.log_obj = null
+        delete this.log_obj
+
         // Automatic transforms for JSON data
         this.log_obj = response.data
         this.logs = this.log_obj.logs

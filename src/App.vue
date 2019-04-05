@@ -48,7 +48,10 @@
         @success="onUploadSuccess"
         @failed="onUploadFailed"></uploadfile-dialog>
       <process-progress ref="processProgress" :status=progressStatus></process-progress>
-      <popup-messagebox ref="popupMessageBox" :message=popupMessage></popup-messagebox>
+      <popup-messagebox ref="popupMessageBox"
+        :message=popupMessage
+        :handler="onOkClick"
+      ></popup-messagebox>
       <router-view></router-view>
     </v-content>
     <v-footer color="indigo" app>
@@ -74,7 +77,7 @@ export default {
     drawer: null,
     progressStatus: '',
     popupMessage: '',
-    count: { objs: [ { title: '123' }] }
+    taskData: {},
   }),
   components: {
     'uploadfile-dialog': UploadFileDialog,
@@ -108,6 +111,16 @@ export default {
       this.$refs.upload_dialog.open()
     },
 
+    onOkClick() {
+      console.log('click')
+      if(this.taskData.status == 'success')
+        this.$router.push({ name: 'log_view',
+          params: {
+            task_id: this.taskData.task_id,
+            page: 1
+          }})
+    },
+
     retrieveTaskStatus(task_id) {
       delay(5000)('retry').then((result) => {
         console.log('retrieve task:' + task_id)
@@ -116,6 +129,8 @@ export default {
         .then(response => {
           // Automatic transforms for JSON data
           console.log(response.data.status)
+          this.taskData = response.data
+
           if(response.data.status == 'running') {
             this.retrieveTaskStatus(task_id)
           }

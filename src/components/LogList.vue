@@ -27,7 +27,11 @@ export default {
   methods: {
     onProfileClick(task_id) {
       console.log(task_id)
-      this.$router.push({ name: 'log_view', params: { task_id: task_id }})
+      this.$router.push({ name: 'log_view',
+        params: {
+          task_id: task_id,
+          page: 1
+        }})
     },
 
     checkTaskIconType(taskStatus) {
@@ -61,6 +65,10 @@ export default {
 
     try {
       const response = await this.axios.get('/file/')
+
+      this.logProfileObjs = null
+      delete this.logProfileObjs
+
       // Automatic transforms for JSON data
       this.logProfileObjs = response.data
 
@@ -70,6 +78,10 @@ export default {
 
     try {
       const response = await this.axios.get('/pecker/')
+
+      this.peckerTaskObjs = null
+      delete this.peckerTaskObjs
+
       this.peckerTaskObjs = response.data
 
       this.peckerTaskObjs.sort((x, y) => {

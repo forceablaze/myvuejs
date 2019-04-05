@@ -7,7 +7,7 @@
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="primary" flat @click="dialog = false">
+        <v-btn color="primary" flat @click="onClick()">
           OK
         </v-btn>
       </v-card-actions>
@@ -27,6 +27,10 @@ export default {
     message: {
       type: String,
       default: 'Message'
+    },
+    handler: {
+      type: Function,
+      default: () => {}
     }
   },
   methods: {
@@ -35,6 +39,10 @@ export default {
     },
     hide() {
       this.dialog = false
+    },
+    onClick() {
+      this.dialog = false
+      this.handler()
     }
   }
 }

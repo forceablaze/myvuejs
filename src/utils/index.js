@@ -24,4 +24,12 @@ let retry = (func) => {
   }
 }
 
-export { delay };
+let reverse = (str) => {
+  return [...str].reverse().join('')
+}
+
+let isVisableASCII = (str) => {
+  return /^[\x20-\x7E]*$/.test(str);
+}
+
+export { delay, reverse };
