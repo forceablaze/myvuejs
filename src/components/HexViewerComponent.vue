@@ -55,29 +55,40 @@ export default {
 
   data() {
     return {
-      raw: '',
       tuples: []
     }
   },
 
-  props: ['hexs', 'order'],
+  props: ['hexs'],
 
-  mounted() {
-    let addr = 0
-    let eachRowCount = 4
-    let eachElementSize = 4
-    let nextAddr = eachRowCount * eachElementSize
+  watch: {
+    'hexs' (to, from) {
+      this.calc()
+    },
+  },
+
+  methods: {
+    calc() {
+
+      this.tuples = null
+
+      let tuples = []
+
+      let addr = 0
+      let eachRowCount = 4
+      let eachElementSize = 4
+      let nextAddr = eachRowCount * eachElementSize
     
-    for(let i = 0; i < this.hexs.length; i += nextAddr * 2) {
-      let obj = {}
-      obj.addr = addr.toString(16).padStart(8, '0')
-      let _str = this.hexs.substring(i, i + (nextAddr * 2))
+      for(let i = 0; i < this.hexs.length; i += nextAddr * 2) {
+        let obj = {}
+        obj.addr = addr.toString(16).padStart(8, '0')
+        let _str = this.hexs.substring(i, i + (nextAddr * 2))
 
-      let hexs = ''
-      let chars = ''
+        let hexs = ''
+        let chars = ''
 
-      for(let j = 0; j < _str.length; j++) {
-        hexs += _str[j].toUpperCase()
+        for(let j = 0; j < _str.length; j++) {
+          hexs += _str[j].toUpperCase()
 
         /* TODO fixme
         if(j & 1) {
@@ -86,18 +97,25 @@ export default {
         }
 				*/
 
-        if((j + 1) % 8 == 0) {
-          hexs += ' '
-          chars += ' '
+          if((j + 1) % 8 == 0) {
+            hexs += ' '
+            chars += ' '
+          }
         }
+        obj.hexs = hexs
+        obj.chars = chars
+
+        addr += nextAddr
+
+        tuples.push(obj)
       }
-      obj.hexs = hexs
-      obj.chars = chars
 
-      addr += nextAddr
+      this.tuples = tuples
+    },
+  },
 
-      this.tuples.push(obj)
-    }
+  mounted() {
+    this.calc()
   },
 
   computed: {

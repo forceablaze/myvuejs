@@ -204,22 +204,24 @@ export default {
   data() {
     return {
       showRaw: false,
-      raw: ''
     }
   },
 
   props: ['log'],
 
   mounted() {
-    if(this.raw == '')
-      this.log.raw.forEach((record) => {
-        record.forEach((data) => {
-          this.raw += data
-        })
-      })
   },
 
   computed: {
+    'raw' () {
+      let raw = ''
+      this.log.raw.forEach((record) => {
+        record.forEach((data) => {
+          raw += data
+        })
+      })
+      return raw
+    },
     'text' () {
       return this.formatted_text
     },
