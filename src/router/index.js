@@ -43,7 +43,6 @@ let createRouter = () => {
         },
       ]
     },
-    { path: '/test', name: 'test', component: LogViewContainer },
     { path: '/about', name: 'about', component: About },
   ]
 

@@ -71,7 +71,7 @@ class CVLogRetrieveView(RetrieveAPIView):
     permission_classes = (AllowAny, )
     renderer_classes = (JSONRenderer, )
 
-    def responseLogJSON(self, peckerTask, log_from = 0, log_to = None, count = 50):
+    def responseLogJSON(self, peckerTask, log_from = 0, log_to = None, count = 200):
         print('fetch log json log_id: {}, from: {}, to: {}, count: {}'.format(
             peckerTask.log_id, log_from, log_to, count))
 
@@ -122,7 +122,7 @@ class CVLogRetrieveView(RetrieveAPIView):
             return Response(content)
 
         log_from = 0
-        count = 50
+        count = 200
         log_to = None
         if 'from' in request.data:
             log_from = request.data['from']

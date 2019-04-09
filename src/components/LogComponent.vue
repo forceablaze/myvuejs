@@ -1,50 +1,6 @@
 <template>
-  <v-expansion-panel-content>
-    <template v-slot:header>
-      <v-flex>
-        <v-layout row>
-          <v-flex d-flex xs1 style="font-size: 18px;">
-            <span>{{ log.index }}</span>
-          </v-flex>
-          <v-divider vertical></v-divider>
-
-          <v-flex d-flex style="width: 100px;"> 
-            <span>{{ log.time }}</span>
-          </v-flex>
-          <v-divider vertical></v-divider>
-
-          <v-flex d-flex style="width: 200px"> 
-            <span>{{ log.apitype }}</span>
-          </v-flex>
-
-          <v-divider vertical></v-divider>
-
-          <v-flex d-flex style="width: 100px"> 
-            <span>{{ log.flag }}</span>
-          </v-flex>
-
-          <v-divider vertical></v-divider>
-
-          <v-flex d-flex style="width: 100px"> 
-            <span>{{ log.direction }}</span>
-          </v-flex>
-
-          <v-divider vertical></v-divider>
-
-          <v-flex d-flex style="width: 100px"> 
-            <span>{{ log.logid }}</span>
-          </v-flex>
-          <v-divider vertical></v-divider>
-
-          <v-flex d-flex xs12> 
-            <span>{{ formatted_text }}</span>
-          </v-flex>
-        </v-layout>
-      </v-flex>
-    </template>
 
     <v-layout row>
-
       <v-layout column>
         <v-flex d-flex sm2>
           <v-layout row>
@@ -159,8 +115,6 @@
 
     </v-layout>
 
-  </v-expansion-panel-content>
-
 </template>
 
 <style>
@@ -204,12 +158,22 @@ export default {
   data() {
     return {
       showRaw: false,
+      panel: false
     }
   },
 
-  props: ['log'],
+  props: ['log', 'show'],
 
   mounted() {
+  },
+
+  watch: {
+    'panel' (to, from) {
+      console.log('panel changed:' + to)
+    },
+    'show' (to, from) {
+      console.log('show changed:' + to)
+    }
   },
 
   computed: {

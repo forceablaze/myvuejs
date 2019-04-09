@@ -17,6 +17,9 @@
 </template>
 
 <script>
+
+import { isFunction } from '@/utils'
+
 export default {
   name: 'toolbar-component',
 
@@ -31,8 +34,8 @@ export default {
 
   methods: {
     clickHandler() {
-      console.log('click')
-      this.handler()
+      if(isFunction(this.handler))
+        this.handler()
     }
   },
 

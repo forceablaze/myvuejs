@@ -34,6 +34,18 @@ export default {
         }})
     },
 
+    refreshToolBar() {
+      this.$store.dispatch('UPDATE_TOOLBAR_MENU', {
+        'title': 'Uploaded Log',
+        'menuComponents': [
+          { 'type': 'icon', 'iconType': 'refresh', 'handler': this.refresh },
+        ]})
+    },
+
+    refresh() {
+      this.fetchTaskList()
+    },
+
     checkTaskIconType(taskStatus) {
       if(taskStatus == 'running')
         return { 'type': 'loop', 'color': 'grey' }
@@ -48,6 +60,58 @@ export default {
       return this.logProfileObjs.find((element) => {
         return element.id == log_id
       })
+    },
+
+    async fetchTaskList() {
+
+      this.profiles = []
+
+      try {
+        const response = await this.axios.get('/file/')
+
+        this.logProfileObjs = null
+        delete this.logProfileObjs
+
+      // Automatic transforms for JSON data
+        this.logProfileObjs = response.data
+
+      } catch(error) {
+        console.log(error)
+      }
+
+      try {
+        const response = await this.axios.get('/pecker/')
+
+        this.peckerTaskObjs = null
+        delete this.peckerTaskObjs
+
+        this.peckerTaskObjs = response.data
+
+        this.peckerTaskObjs.sort((x, y) => {
+          let xDate = new Date(x.timestamp)
+          let yDate = new Date(y.timestamp)
+        
+        // the first the newest
+          return yDate - xDate
+        })
+
+        this.peckerTaskObjs.forEach((task) => {
+          let logProfile = this.findLogProfile(task.log_id)
+          let { type, color } = this.checkTaskIconType(task.status)
+
+          this.profiles.push({
+            id: task.task_id,
+            title: logProfile.file,
+            file_size: logProfile.file_size,
+            timestamp: logProfile.timestamp,
+            iconType: type,
+            iconColor: color
+          })
+        })
+      } catch(error) {
+        console.log(error)
+      }
+
     }
   },
 
@@ -61,54 +125,9 @@ export default {
     }
   },
 
-  async mounted() {
-
-    try {
-      const response = await this.axios.get('/file/')
-
-      this.logProfileObjs = null
-      delete this.logProfileObjs
-
-      // Automatic transforms for JSON data
-      this.logProfileObjs = response.data
-
-    } catch(error) {
-      console.log(error)
-    }
-
-    try {
-      const response = await this.axios.get('/pecker/')
-
-      this.peckerTaskObjs = null
-      delete this.peckerTaskObjs
-
-      this.peckerTaskObjs = response.data
-
-      this.peckerTaskObjs.sort((x, y) => {
-        let xDate = new Date(x.timestamp)
-        let yDate = new Date(y.timestamp)
-        
-        // the first the newest
-        return yDate - xDate
-      })
-
-      this.peckerTaskObjs.forEach((task) => {
-        let logProfile = this.findLogProfile(task.log_id)
-        let { type, color } = this.checkTaskIconType(task.status)
-
-        this.profiles.push({
-          id: task.task_id,
-          title: logProfile.file,
-          file_size: logProfile.file_size,
-          timestamp: logProfile.timestamp,
-          iconType: type,
-          iconColor: color
-        })
-      })
-
-    } catch(error) {
-      console.log(error)
-    }
+  mounted() {
+    this.refreshToolBar()
+    this.fetchTaskList()
   },
 
   components: {

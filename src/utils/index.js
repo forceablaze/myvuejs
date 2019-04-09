@@ -32,4 +32,8 @@ let isVisableASCII = (str) => {
   return /^[\x20-\x7E]*$/.test(str);
 }
 
-export { delay, reverse };
+let isFunction = (obj) => {
+  return obj && {}.toString.call(obj) === '[object Function]';
+}
+
+export { delay, reverse, isFunction };

@@ -20,19 +20,9 @@ export default {
   },
 
   mounted() {
-    if(this.$route.name == 'log_list')
-        this.refreshToolBar()
   },
 
   methods: {
-    refreshToolBar() {
-      this.$store.dispatch('UPDATE_TOOLBAR_MENU', {
-        'title': 'Uploaded Log',
-        'menuComponents': [
-          { 'type': 'icon', 'iconType': 'search' },
-          { 'type': 'icon', 'iconType': 'refresh' },
-        ]})
-    },
     add() {
       this.count++
       this.profiles.push({
@@ -45,8 +35,6 @@ export default {
 
   watch: {
     '$route' (to, from) {
-      if(to.name == 'log_list')
-        this.refreshToolBar()
     }
   },
 }
