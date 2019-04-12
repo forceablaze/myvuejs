@@ -52,7 +52,6 @@
               <v-card
                 style="background-color:#13EEFF; font-size:18px;"
               >
-
                 <v-card-text>{{ 'TaskID: ' + log.task_domain + '/' + log.task_subsys }}</v-card-text>
               </v-card>
             </v-flex>
@@ -118,11 +117,6 @@
 </template>
 
 <style>
-.v-expansion-panel__header {
-  background-color: #CBFFD3;
-  padding: 0px 0px 0px 0px;
-  min-height: 0px;
-}
 .v-label {
   font-size: 12px;
 }
@@ -162,7 +156,7 @@ export default {
     }
   },
 
-  props: ['log', 'show'],
+  props: ['log', 'show', 'highlight'],
 
   mounted() {
   },

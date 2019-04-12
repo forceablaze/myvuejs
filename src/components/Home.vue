@@ -20,7 +20,12 @@ export default {
     this.$store.dispatch('UPDATE_TOOLBAR_MENU', {
       'title': 'WoodPecker',
       'menuComponents': [
-        { 'type': 'icon', 'iconType': 'info' },
+        { 'type': 'icon', 'iconType': 'info', 'handler':
+          () => {
+            window.open("/#/log","windowName",
+              "height=300,width=800,toolbar=no,menubar=no,status=no,location=no");
+          }
+        },
       ]})
   },
 }

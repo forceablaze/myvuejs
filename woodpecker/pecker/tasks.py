@@ -17,9 +17,31 @@ from pecker.models import PeckerTaskStatus, PeckerTaskStatusToString
 
 from pecker.models import CVLog, LogMeta
 
+import re
+
 @shared_task
 def add(x, y):
     return x + y
+
+@shared_task(bind=True)
+def search_text_task(self, string, seq, pattern):
+    indexs = []
+
+    for m in re.finditer(string, seq):
+
+        # find the magic number
+        res = re.finditer(pattern[::-1], seq[m.start() - 1::-1])
+        it = iter(res)
+        a = next(it)
+
+        # find the index of log
+        subseq = seq[0:m.start()]
+        res = re.match('\d+FF', subseq[len(subseq) - a.start():])
+        if res:
+            index = int(res.group(0)[:len(res.group(0)) - 2])
+            indexs.append(index)
+
+    return indexs
 
 def createCVLog(fileStatus, obj):
     return CVLog(

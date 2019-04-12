@@ -1,15 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import axios from 'axios'
-import VueAxios from 'vue-axios'
-
-let axiosInstance = axios.create({
-  baseURL: 'http://localhost:8000/api',
-	timeout: 60000,
-})
 
 Vue.use(Router)
-Vue.use(VueAxios, axiosInstance)
 
 import Hello from '@/components/Hello'
 import Home from '@/components/Home'

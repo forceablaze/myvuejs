@@ -31,7 +31,20 @@ export default {
         subtitle: 'subtitle' + this.count
       })
     },
+    handleResize() {
+      console.log('size changed')
+      window.scrollTo(0, document.body.scrollHeight)
+    }
   },
+  ready: function () {
+    window.addEventListener('resize', this.handleResize)
+  },
+
+  beforeDestroy: function () {
+    window.removeEventListener('resize', this.handleResize)
+    this.profiles = null
+  },
+
 
   watch: {
     '$route' (to, from) {

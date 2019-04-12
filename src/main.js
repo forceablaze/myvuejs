@@ -4,6 +4,12 @@ import Vue from 'vue'
 import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css'
 
+import axios from 'axios'
+import VueAxios from 'vue-axios'
+
+import { axiosConfig } from '@/config'
+Vue.use(VueAxios, axios.create(axiosConfig))
+
 import App from './App'
 import { createStore } from '@/store/index'
 import { createRouter } from './router'

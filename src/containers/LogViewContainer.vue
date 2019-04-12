@@ -1,9 +1,21 @@
 <template>
   <v-container>
-    <search-dialog ref="search_dialog">
+    <search-dialog ref="search_dialog"
+      @search="searchLog"
+    >
     </search-dialog>
 
+    <goto-log-dialog ref="goto_log_dialog"
+      @goto="gotoLog"
+    >
+    </goto-log-dialog>
+
+    <v-container
+      class="scroll-y"
+    >
+
     <v-data-table
+      ref="table"
       :headers="headers"
       :items="logs"
       :expand="true"
@@ -11,10 +23,13 @@
       loading="true"
       :rows-per-page-items="rowsPerPageItems"
 			:pagination.sync="pagination"
+      hide-actions
     >
 
       <template v-slot:items="props">
-        <tr @click="itemClicked(props)" style="background-color: #CBFFD3;">
+        <tr @click="itemClicked(props)"
+          v-bind:style="[highlight[props.index] ? { 'background-color': '#FF3333' } : { 'background-color': '#CBFFD3' }]"
+        >
             <td>{{ props.item.index }}</td>
             <td>{{ props.item.time }}</td>
             <td>{{ props.item.apitype }}</td>
@@ -32,6 +47,57 @@
         </log-component>
       </template>
     </v-data-table>
+    </v-container>
+
+
+    <div
+      v-show="showSearchResult"
+    >
+      <v-flex d-flex xs12 style="background-color: #DDDDDD;">
+        <span>Search Result</span>
+      </v-flex>
+
+      <v-container
+        class="scroll-y"
+        style="max-height: 400px"
+      >
+
+        <v-data-table
+          height="400"
+          ref="table"
+          :headers="headers"
+          :items="searchResultLogs"
+          :expand="true"
+          item-key="index"
+          loading="true"
+          hide-headers
+          :rows-per-page-items="searchRowsPerPageItems"
+          :pagination.sync="searchPagination"
+        >
+          <template v-slot:items="props">
+            <tr @click="itemClicked(props)"
+              v-bind:style="{ 'background-color': '#CBFFD3' }"
+            >
+              <td>{{ props.item.index }}</td>
+              <td>{{ props.item.time }}</td>
+              <td>{{ props.item.apitype }}</td>
+              <td>{{ props.item.flag }}</td>
+              <td>{{ props.item.direction }}</td>
+              <td>{{ props.item.logid }}</td>
+              <td v-if="props.item.format=='binary'">{{ props.item.formatted_text }}</td>
+              <td v-else-if="props.item.format=='text'">{{ props.item.text }}</td>
+            </tr>
+          </template>
+          <template v-slot:expand="props">
+            <log-component
+              :log="props.item"
+            >
+           </log-component>
+          </template>
+        </v-data-table>
+      </v-container>
+    </div>
+
   </v-container>
 </template>
 
@@ -50,17 +116,21 @@ table.v-table tbody td, table.v-table tbody th {
 
 import LogComponent from '@/components/LogComponent'
 import SearchDialog from '@/components/SearchDialog'
+import GotoLogDialog from '@/components/GotoLogDialog'
 
 export default {
   data() {
     return {
       logs: [],
+      searchResultLogs: [],
+      highlight: [],
+      bodyHeight: 0,
       expand: false,
       count: 0,
       log_obj: {},
-      log: {},
       showAll: false,
-      currentPageIndex: 0,
+      showSearchResult: false,
+      watchScrollHeightTimer: undefined,
       headers: [
         { text: 'index', value: 'index'},
         { text: 'time', value: 'time' },
@@ -70,31 +140,59 @@ export default {
         { text: 'logid', value: 'logid' },
         { text: 'data', value: 'data' },
       ],
-      rowsPerPageItems: [25, 50, {text: 'All', value: -1}],
+      rowsPerPageItems: [{text: 'All', value: -1}],
       pagination: {
-        rowsPerPage: 50
+        rowsPerPage: 200
+      },
+      searchRowsPerPageItems: [{text: 'All', value: -1}],
+      searchPagination: {
+        rowsPerPage: 20
       },
     }
   },
 
   props: ['task_id', 'page'],
 
+  computed: {
+    'pageInfo' () {
+      return 'page: ' + this.page + '/' + this.log_obj.total_pages
+    },
+    'upperContainerHeight' () {
+      return String(this.bodyHeight - 800) + 'px'
+    }
+  },
+
   watch: {
     '$route' (to, from) {
-      console.log(to.params.page)
-      this.fetchLog()
+      console.log(to.query)
+      this.fetchLog((this.page - 1) * 200)
+    },
+    'window.scrollY' (to) {
+      console.log('scroll height changed:' + to)
     }
   },
   methods: {
+    handleResize() {
+      console.log('size changed')
+      window.scrollTo(0, document.body.scrollHeight)
+    },
+
     itemClicked(props) {
       props.expanded = !props.expanded
     },
+
     showAllLog() {
-      this.panel = [...this.logs.keys()].map(_ => true)
+      for(let i = 0; i < this.logs.length; i += 1) {
+        const log = this.logs[i]
+        this.$set(this.$refs.table.expanded, log.index, true)
+      }
     },
     // Reset the panel
     hideAllLog() {
-      this.panel = []
+      for(let i = 0; i < this.logs.length; i += 1) {
+        const log = this.logs[i]
+        this.$set(this.$refs.table.expanded, log.index, false)
+      }
     },
 
     search() {
@@ -102,17 +200,92 @@ export default {
       this.$refs.search_dialog.open()
     },
 
+    gotoLog(index) {
+      this.fetchLog(Number(index), () => {
+
+        this.highlight = [...this.logs.values()].map((log, idx) => {
+          return log.index == Number(index)
+        })
+      })
+    },
+
+    searchLog(data) {
+      console.log('search log')
+      console.log(data)
+
+      this.$store.dispatch('SHOW_PROCESS_PROGRESS', {
+        'title': 'Loading...'
+      })
+
+      this.axios.post('/pecker/cvlog/' + this.task_id + '/search', data)
+      .then(response => {
+        // relese obj
+        this.searchResultLogs = null
+
+        // Automatic transforms for JSON data
+        this.searchResultLogs = response.data.logs
+
+
+        let lastHeight = document.body.scrollHeight
+        console.log(lastHeight)
+
+        this.updateToolBar('BACK', () => {
+          this.fetchLog((this.page - 1) * 200)
+          this.showSearchResult = false
+        })
+
+        this.showSearchResult = true
+
+        let run = () => {
+          let newHeight = document.body.scrollHeight
+
+          if(newHeight != lastHeight) {
+            window.scrollTo(0, newHeight)
+            this.bodyHeight = newHeight
+            clearTimeout(this.watchScrollHeightTimer)
+            return
+          }
+
+          if(this.watchScrollHeightTimer)
+            clearTimeout(this.watchScrollHeightTimer)
+
+          this.watchScrollHeightTimer = setTimeout(run, 200)
+        }
+
+        this.watchScrollHeightTimer = setTimeout(run, 200)
+
+        this.$store.dispatch('HIDE_PROCESS_PROGRESS')
+      })
+      .catch(error => {
+        console.log(error)
+      });
+    },
+
+    onGotoClick() {
+      this.$refs.goto_log_dialog.open()
+    },
+
     fetchForwardLog() {
       console.log('fetch forward')
+
+      let nextPage = parseInt(this.page) + 1
+      if(nextPage > this.log_obj.total_pages)
+        return
+
       this.$router.push({ name: 'log_view',
         params: {
           task_id: this.task_id,
-          page: parseInt(this.page) + 1
+          page: nextPage
         }})
     },
 
     fetchBackLog() {
       console.log('back forward')
+
+      let prevPage = parseInt(this.page) - 1
+      if(prevPage <= 0)
+        return
+
       this.$router.push({ name: 'log_view',
         params: {
           task_id: this.task_id,
@@ -120,10 +293,14 @@ export default {
         }})
     },
 
-    fetchLog() {
-      let from = (this.page - 1) * 200
+    fetchLog(from, doneHandler = () => {} ) {
+      //let from = (this.page - 1) * 200
+      console.log(typeof from)
 
       console.log('fetch log ' + from)
+      this.$store.dispatch('SHOW_PROCESS_PROGRESS', {
+        'title': 'Loading...'
+      })
 
       this.axios.post('/pecker/cvlog', {
         task_id: this.task_id,
@@ -137,14 +314,18 @@ export default {
         // Automatic transforms for JSON data
         this.log_obj = response.data
         this.logs = this.log_obj.logs
-        this.updateToolBar()
+
+        doneHandler()
+        this.updateToolBar(this.pageInfo)
+
+        this.$store.dispatch('HIDE_PROCESS_PROGRESS')
       })
       .catch(error => {
         console.log(error)
       });
     },
   
-    updateToolBar() {
+    updateToolBar(info, handler) {
       let text = ''
       if(!this.showAll) {
         text = 'show all'
@@ -156,7 +337,8 @@ export default {
       this.$store.dispatch('UPDATE_TOOLBAR_MENU', {
         'title': this.log_obj.product + '/' + this.log_obj.serial_number,
         'menuComponents': [
-          { 'type': 'flat', 'text': text, 'handler': this.showHideLog },
+          { 'type': 'flat', 'text': info, 'handler': handler },
+          { 'type': 'flat', 'text': 'GOTO', 'handler': this.onGotoClick },
           { 'type': 'icon', 'iconType': 'search', 'handler': this.search },
           { 'type': 'icon', 'iconType': 'arrow_back_ios', 'handler': this.fetchBackLog },
           { 'type': 'icon', 'iconType': 'arrow_forward_ios', 'handler': this.fetchForwardLog },
@@ -176,14 +358,31 @@ export default {
     }
   },
 
+  ready: function () {
+    window.addEventListener('resize', this.handleResize)
+  },
+
+  beforeDestroy: function () {
+    window.removeEventListener('resize', this.handleResize)
+    clearInterval(this.watchScrollHeightTimer)
+    this.logs = null
+    delete this.logs
+    this.log_obj = null
+    delete this.log_obj
+    this.searchResultLogs = null
+    delete this.searchResultLogs
+  },
+
   mounted() {
     console.log('fetch cvlog')
-    this.fetchLog()
+
+    this.fetchLog((this.page - 1) * 200)
   },
 
   components: {
     LogComponent,
-    SearchDialog
+    SearchDialog,
+    GotoLogDialog
   }
 }
 

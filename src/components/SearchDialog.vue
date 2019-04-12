@@ -22,9 +22,12 @@
         </v-flex>
 
         <v-flex v-if="apitypeModel == -1" xs12 sm5>
-          <v-text-field single-line
-            label="decimal"
-            v-model="apitypeValue"></v-text-field>
+          <v-card-text>
+            <v-text-field single-line
+              label="decimal"
+              v-model="apitypeValue">
+            </v-text-field>
+          </v-card-text>
         </v-flex>
       </v-layout>
 
@@ -59,6 +62,8 @@
             <v-textarea
             outline
             label="payload"
+            height="100"
+            :placeholder="dataAreaHolder"
             v-model="dataAreaValue"
             ></v-textarea>
           </v-card-text>
@@ -100,9 +105,10 @@ export default {
         { text: "text", value: 1, },
         { text: "binary", value: 2, },
       ],
-      apitypeModel: -1,
+      apitypeModel: -2,
       apitypeValue: 0,
       apitypeItems: [
+        { text: "All", value: -2 },
         { text: "Dbgl API direct", value: 0 },
         { text: "API種別APP用ベース値", value: 65536 },
         { text: "API種別PF用ベース値", value: 41943294 },
@@ -141,19 +147,52 @@ export default {
       ]
     }
   },
+  computed: {
+    dataAreaHolder () {
+      if(this.dataAreaModel == 0)
+        return 'Please input string. e.g., ShowMessage'
+      else
+        return 'Please input hex string (big endian, case-insensitive). e.g, 53686F774D657373616765'
+    }
+  },
+
   methods: {
     open() {
 			this.dialog = true
     },
     search() {
+      let data = {}
+
       let apitype = null
       if(this.apitypeModel == -1)
-        apitype = this.apitypeValue
+        apitype = { text: this.apitypeValue }
+      else {
+        apitype = this.apitypeItems.filter((e) => {
+          return e.value == this.apitypeModel
+        })[0]
+      }
+
+      console.log(this.apitypeModel)
+      console.log(this.apitypeValue)
+      console.log(apitype.text)
+      if(this.apitypeModel != -2) {
+        data.apitype = apitype.text
+      }
+
+      let log_format = this.logformatItems.filter((e) => {
+        return e.value == this.logformatModel
+      })[0]
+
+      if(this.logformatModel != 0)
+        data.log_format = log_format.text
+
+      if(this.dataAreaModel == 0)
+        data.text = this.dataAreaValue
       else
-        apitype = this.apitypeModel
-      console.log(apitype)
-      console.log(this.logformatModel)
-      console.log(this.dataAreaValue)
+        data.hexs = this.dataAreaValue
+
+      this.dialog = false
+      this.$emit('search', data)
     },
     upload() {
     },

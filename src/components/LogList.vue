@@ -130,6 +130,13 @@ export default {
     this.fetchTaskList()
   },
 
+  beforeDestroy: function () {
+    window.removeEventListener('resize', this.handleResize)
+    this.profiles = null
+    this.logProfileObjs = null
+    this.peckerTaskObjs = null
+  },
+
   components: {
     LogProfile
   }

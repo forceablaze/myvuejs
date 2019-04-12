@@ -47,7 +47,7 @@
         @uploading="onUploading"
         @success="onUploadSuccess"
         @failed="onUploadFailed"></uploadfile-dialog>
-      <process-progress ref="processProgress" :status=progressStatus></process-progress>
+      <process-progress ref="processProgress"></process-progress>
       <popup-messagebox ref="popupMessageBox"
         :message=popupMessage
         :handler="onOkClick"
@@ -75,7 +75,6 @@ export default {
 
   data: () => ({
     drawer: null,
-    progressStatus: '',
     popupMessage: '',
     taskData: {},
   }),
@@ -135,11 +134,14 @@ export default {
             this.retrieveTaskStatus(task_id)
           }
           else if(response.data.status == 'success') {
-            this.$refs.processProgress.hide()
+            //this.$refs.processProgress.hide()
+            this.hideProgressBar()
+
             this.showPopupMessageBox('Success')
           }
           else if(response.data.status == 'failed') {
-            this.$refs.processProgress.hide()
+            //this.$refs.processProgress.hide()
+            this.hideProgressBar()
             this.showPopupMessageBox('Failed')
           }
           else {
@@ -156,7 +158,9 @@ export default {
     onUploadSuccess(data) {
       console.log('upload success log_id:' + data.id)
 
-      this.$refs.processProgress.hide()
+      //this.$refs.processProgress.hide()
+
+      this.hideProgressBar()
 
       /* trigger pecker task */
       this.axios.post('/pecker/', {
@@ -187,9 +191,15 @@ export default {
     },
 
     showProgressBar(status) {
-      this.progressStatus = status
-      this.$refs.processProgress.show()
+      this.$store.dispatch('SHOW_PROCESS_PROGRESS', {
+        'title': status
+      })
     },
+
+    hideProgressBar() {
+      this.$store.dispatch('HIDE_PROCESS_PROGRESS')
+    },
+
 
     toShowLogPage() {
       this.navigatePage('log_list')
