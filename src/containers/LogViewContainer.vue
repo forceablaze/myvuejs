@@ -32,7 +32,8 @@
         >
             <td>{{ props.item.index }}</td>
             <td>{{ props.item.time }}</td>
-            <td>{{ props.item.apitype }}</td>
+            <td v-if="checkAPIType(props.item.apitype)">{{ props.item.apitype }}</td>
+            <td v-else>{{ props.item.apitype + ' ' + props.item.own_domain + '/' + props.item.own_subsys  }}</td>
             <td>{{ props.item.flag }}</td>
             <td>{{ props.item.direction }}</td>
             <td>{{ props.item.logid }}</td>
@@ -80,7 +81,8 @@
             >
               <td>{{ props.item.index }}</td>
               <td>{{ props.item.time }}</td>
-              <td>{{ props.item.apitype }}</td>
+              <td v-if="checkAPIType(props.item.apitype)">{{ props.item.apitype }}</td>
+              <td v-else>{{ props.item.apitype + ' ' + props.item.own_domain + '/' + props.item.own_subsys  }}</td>
               <td>{{ props.item.flag }}</td>
               <td>{{ props.item.direction }}</td>
               <td>{{ props.item.logid }}</td>
@@ -172,6 +174,9 @@ export default {
     }
   },
   methods: {
+    checkAPIType(apitype) {
+      return isNaN(Number(apitype))
+    },
     handleResize() {
       console.log('size changed')
       window.scrollTo(0, document.body.scrollHeight)

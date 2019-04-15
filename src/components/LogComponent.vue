@@ -65,9 +65,9 @@
             :hexs="raw"
           ></hex-viewer-component>
           <v-card v-else style="font-size: 24px;">
-            <v-card-text>
-              {{ text }}
-            </v-card-text>
+            <v-card-text
+              style="white-space: pre-wrap; word-wrap: break-word;"
+            >{{ text }}</v-card-text>
           </v-card>
         </v-flex>
       </v-layout>
