@@ -109,7 +109,7 @@ export default {
       apitypeValue: 0,
       apitypeItems: [
         { text: "All", value: -2 },
-        { text: "Dbgl API direct", value: 0 },
+        { text: "API種別：Dbgl API direct", value: 0 },
         { text: "API種別APP用ベース値", value: 65536 },
         { text: "API種別PF用ベース値", value: 41943294 },
         { text: "DbguSystemEvent()", value: (1 << 16) },
