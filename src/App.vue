@@ -186,8 +186,9 @@ export default {
     },
 
     showPopupMessageBox(message) {
-      this.popupMessage = message
-      this.$refs.popupMessageBox.show()
+      this.$store.dispatch('SHOW_POPUP_MESSAGE', {
+        'title': message
+      })
     },
 
     showProgressBar(status) {
@@ -199,7 +200,6 @@ export default {
     hideProgressBar() {
       this.$store.dispatch('HIDE_PROCESS_PROGRESS')
     },
-
 
     toShowLogPage() {
       this.navigatePage('log_list')

@@ -76,6 +76,9 @@ export default {
         this.logProfileObjs = response.data
 
       } catch(error) {
+        this.$store.dispatch('SHOW_POPUP_MESSAGE', {
+         'title': error
+        })
         console.log(error)
       }
 
@@ -109,6 +112,9 @@ export default {
           })
         })
       } catch(error) {
+        this.$store.dispatch('SHOW_POPUP_MESSAGE', {
+         'title': error
+        })
         console.log(error)
       }
 

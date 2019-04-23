@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
 from rest_framework.generics import RetrieveAPIView, ListCreateAPIView
@@ -13,6 +14,8 @@ from rest_framework import status
 from .models import PeckerTask
 from .serializers import PeckerTaskSerializer
 
+from cvlog.symbol import SymbolTable
+
 from rest_framework import mixins
 
 import io, re
@@ -21,10 +24,17 @@ import copy
 from pathlib import Path
 from file.models import File
 
-from .tasks import pecker_exec, add, search_text_task
+from .tasks import pecker_exec, add, search_text_task, search_log_exec
 
 CVLOG_CACHE = {}
 PER_PAGE_COUNT = 200
+
+symbolTable = SymbolTable.loadSymbolTable(settings.SYMBOL_TABLE_PATH)
+
+REVERSE_TABLE = {
+ 'funcid': None,
+ 'execreq': None,
+}
 
 # Create your views here.
 class PeckerTaskStatusView(RetrieveAPIView):
@@ -180,43 +190,14 @@ class CVLogSearchView(mixins.CreateModelMixin, GenericAPIView):
 
         return Response(content, status=status.HTTP_200_OK)
 
-    def searchLog(self, peckerTask, apitype, log_format, text, hexString, beforeAfter = 10):
+    def searchLog(self, peckerTask, apitype, log_format,
+            text, hexString, params_items, beforeAfter = 10):
 
-        fileStatus = None
-        try:
-            fileStatus = File.objects.get(id=peckerTask.log_id)
-        except ObjectDoesNotExist:
-            content = {'message': 'No such log id ({}) found.'.format(peckerTask.log_id)}
-            return Response(content, status=status.HTTP_200_OK)
+        result = search_log_exec(peckerTask, apitype, log_format, text,
+            hexString, params_items, beforeAfter)
 
-        jsonFile = Path(Path(fileStatus.file.path).parent, peckerTask.output).resolve()
-        print('read {}'.format(jsonFile))
-
-        content = {'error': 'something error.'}
-
-        try:
-            f = open(jsonFile, 'r')
-            logObj = json.load(f)
-        except ValueError:
-            print('JSON file format error')
-            return Response({'error': 'JSON file format error.'}, status=status.HTTP_200_OK)
-        except FileNotFoundError:
-            print('{} not found.'.format(jsonFile))
-            return Response({'error': 'No file found.'}, status=status.HTTP_200_OK)
-
-        #originLogs = copy.deepcopy(logObj['logs'])
-        _logs = logObj['logs']
-        if apitype:
-            _logs = list(filter(lambda x: x['apitype'] == apitype, _logs))
-
-        if log_format:
-            _logs = list(filter(lambda x: x['format'] == log_format, _logs))
-
-        if text:
-            _logs = self.searchText(_logs, text)
-        elif hexString:
-            print('search hex')
-            _logs = self.searchHexString(_logs, hexString)
+        logObj = result[0]
+        _logs = result[1]
 
         indexs = [ log['index'] for log in _logs ]
         '''
@@ -229,57 +210,6 @@ class CVLogSearchView(mixins.CreateModelMixin, GenericAPIView):
         '''
 
         return self.responseLogJSON(logObj, _logs, indexs)
-
-    def searchText(self, logs, string):
-        print('searchText')
-
-        MAGIC_NUMBER = bytearray.fromhex('494e544547')
-        pattern = MAGIC_NUMBER.decode()
-
-        strIO = io.StringIO()
-
-        for i in range(0, len(logs)):
-            log = logs[i]
-            if 'text' not in log:
-                continue
-            text = log['text']
-
-            strIO.write(pattern)
-            strIO.write(str(log['index']) + 'FF')
-            strIO.write(text)
-
-        seq = strIO.getvalue()
-        strIO.close()
-        indexs = search_text_task(string, seq, pattern)
-
-        return list(filter(lambda x:  x['index'] in indexs, logs))
-
-    def searchHexString(self, logs, hexString):
-        print('searchHexString')
-
-        MAGIC_NUMBER = bytearray.fromhex('494e544547')
-        pattern = MAGIC_NUMBER.decode()
-
-        strIO = io.StringIO()
-
-        for i in range(0, len(logs)):
-            log = logs[i]
-
-            text = ''
-            for record in log['raw']:
-                for part in record:
-                    text += part
-
-            strIO.write(pattern)
-            strIO.write(str(log['index']) + 'FF')
-            strIO.write(text)
-
-        seq = strIO.getvalue()
-        strIO.close()
-        indexs = search_text_task(hexString.lower(), seq, pattern)
-
-        return list(filter(lambda x:  x['index'] in indexs, logs))
-
 
     def post(self, request, task_id, *args, **kwargs):
         # get task by log_id
@@ -295,6 +225,12 @@ class CVLogSearchView(mixins.CreateModelMixin, GenericAPIView):
         logFormat = None
         text = None
         hexs = None
+        params = None
+        '''
+        params[0] = 123
+        params[1] = 345
+        ...
+        '''
 
         if 'apitype' in request.data:
             apitype = request.data['apitype']
@@ -304,10 +240,14 @@ class CVLogSearchView(mixins.CreateModelMixin, GenericAPIView):
             text = request.data['text']
         if 'hexs' in request.data:
             hexs = request.data['hexs']
+        if 'params' in request.data:
+            params = request.data['params']
 
         print('apitype: {}'.format(apitype))
         print('log_format: {}'.format(logFormat))
         print('text: {}'.format(text))
         print('hexs: {}'.format(hexs))
+        print('params: {}'.format(params))
+        #params: {'funcid': {'name': 'FimsExecute', 'dest': 'logid'}, 'execreq': {'name': 'CursorClose', 'dest': 'part1'}}
 
-        return self.searchLog(peckerTask, apitype, logFormat, text, hexs)
+        return self.searchLog(peckerTask, apitype, logFormat, text, hexs, params)

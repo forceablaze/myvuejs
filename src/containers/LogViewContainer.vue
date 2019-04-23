@@ -33,12 +33,12 @@
             <td>{{ props.item.index }}</td>
             <td>{{ props.item.time }}</td>
             <td v-if="checkAPIType(props.item.apitype)">{{ props.item.apitype }}</td>
-            <td v-else>{{ props.item.apitype + ' ' + props.item.own_domain + '/' + props.item.own_subsys  }}</td>
+            <td v-else>{{ 'PF ' + props.item.own_domain + '/' + props.item.own_subsys  }}</td>
             <td>{{ props.item.flag }}</td>
             <td>{{ props.item.direction }}</td>
             <td>{{ props.item.logid }}</td>
-            <td v-if="props.item.format=='binary'">{{ props.item.formatted_text }}</td>
-            <td v-else-if="props.item.format=='text'">{{ props.item.text }}</td>
+            <td v-if="props.item.format=='binary'">{{ props.item.formatted_text.substring(0, 90) }}</td>
+            <td v-else-if="props.item.format=='text'">{{ props.item.text.substring(0, 90) }}</td>
         </tr>
       </template>
       <template v-slot:expand="props">
@@ -262,6 +262,12 @@ export default {
         this.$store.dispatch('HIDE_PROCESS_PROGRESS')
       })
       .catch(error => {
+
+        this.$store.dispatch('HIDE_PROCESS_PROGRESS')
+        this.$store.dispatch('SHOW_POPUP_MESSAGE', {
+         'title': error
+        })
+
         console.log(error)
       });
     },
@@ -326,6 +332,12 @@ export default {
         this.$store.dispatch('HIDE_PROCESS_PROGRESS')
       })
       .catch(error => {
+
+        this.$store.dispatch('HIDE_PROCESS_PROGRESS')
+        this.$store.dispatch('SHOW_POPUP_MESSAGE', {
+         'title': error
+        })
+
         console.log(error)
       });
     },

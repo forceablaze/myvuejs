@@ -19,29 +19,27 @@
 export default {
   name: 'popup-messagebox',
   data () {
-    return {
-      dialog: false,
+    return {}
+  },
+
+  computed: {
+    dialog () {
+      return this.$store.state.popupmessage.show
+    },
+    message () {
+      return this.$store.state.popupmessage.title
     }
   },
+
   props: {
-    message: {
-      type: String,
-      default: 'Message'
-    },
     handler: {
       type: Function,
       default: () => {}
     }
   },
   methods: {
-    show() {
-      this.dialog = true
-    },
-    hide() {
-      this.dialog = false
-    },
     onClick() {
-      this.dialog = false
+      this.$store.dispatch('HIDE_POPUP_MESSAGE')
       this.handler()
     }
   }

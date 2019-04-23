@@ -17,6 +17,7 @@ from pathlib import Path
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+SYMBOL_TABLE_PATH = Path(BASE_DIR, '../utils/cvlog/debug-symbol/logFormatSymbolsCv2kCS.csv').resolve()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
@@ -25,7 +26,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'soy4w9e+4k*!#f0q^&x42(+f76jsu5mk)g5x+xl8#5=^$a_j_^'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 

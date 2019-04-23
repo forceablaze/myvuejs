@@ -27,7 +27,6 @@ router = routers.DefaultRouter()
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
-    url('api/', include('cvlog.urls',  namespace = 'cvlog')),
     url('api/', include('file.urls',  namespace = 'file')),
     url('api/', include('pecker.urls',  namespace = 'pecker')),
 ]

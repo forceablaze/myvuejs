@@ -48,7 +48,10 @@ export default {
 
   methods: {
     onClick(e) {
-      this.$emit('click', this.profile.id)
+      if(this.profile.iconType != 'done')
+        e.stopPropagation() 
+      else
+        this.$emit('click', this.profile.id)
       e.preventDefault()
     },
   },

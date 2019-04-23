@@ -7,17 +7,33 @@
 
       <v-layout row align-center>
         <v-flex xs12 sm2>
+          <v-subheader>log format</v-subheader>
+        </v-flex>
+        <v-flex xs12 sm10>
+          <v-card-text>
+            <v-select
+              :items="logformatItems"
+              label="log format"
+              v-model="logformatModel"
+            ></v-select>
+          </v-card-text>
+        </v-flex>
+      </v-layout>
+
+      <v-layout row align-center>
+
+        <v-flex xs12 sm2>
           <v-subheader>apitype</v-subheader>
         </v-flex>
 
         <v-flex xs12 sm5>
           <v-card-text>
-            <v-select
+            <v-autocomplete
               :items="apitypeItems"
               v-model="apitypeModel"
               label="log format"
               @change="apitypeChange"
-            ></v-select>
+            ></v-autocomplete>
           </v-card-text>
         </v-flex>
 
@@ -33,16 +49,9 @@
 
       <v-layout row align-center>
         <v-flex xs12 sm2>
-          <v-subheader>log format</v-subheader>
         </v-flex>
         <v-flex xs12 sm10>
-          <v-card-text>
-            <v-select
-              :items="logformatItems"
-              label="log format"
-              v-model="logformatModel"
-            ></v-select>
-          </v-card-text>
+          <component @change="paramsChange" v-if="currentApitypeParams" :is="currentApitypeParams"/>
         </v-flex>
       </v-layout>
 
@@ -85,6 +94,8 @@
 
 <script>
 
+import ServiceCallParams from '@/components/apitype_params/ServiceCallParams.vue'
+
 export default {
   name: 'search-dialog',
 
@@ -110,8 +121,6 @@ export default {
       apitypeItems: [
         { text: "All", value: -2 },
         { text: "API種別：Dbgl API direct", value: 0 },
-        { text: "API種別APP用ベース値", value: 65536 },
-        { text: "API種別PF用ベース値", value: 41943294 },
         { text: "DbguSystemEvent()", value: (1 << 16) },
         { text: "DbguServiceCall()", value: (2 << 16) },
         { text: "DbguScenarioStart()", value: (3 << 16) }, 
@@ -144,7 +153,9 @@ export default {
         { text: "DbguDataLog()", value: ( 42 << 16) },
         { text: "DbguGuiDataLog()", value: (43 << 16) },
         { text: "数値で検索", value:  -1 },
-      ]
+      ],
+      currentApitypeParams: null,
+      params: null,
     }
   },
   computed: {
@@ -191,18 +202,32 @@ export default {
       else
         data.hexs = this.dataAreaValue
 
+      data.params = this.params
+
       this.dialog = false
       this.$emit('search', data)
     },
-    upload() {
+
+    paramsChange(params) {
+      this.params = params
     },
-    pickFile() {
-      this.$refs.file.click()
-    },
-    onFilePicked(e) {
-    },
+
     apitypeChange(value) {
+      let apitype = this.apitypeItems.filter((e) => {
+        return e.value == value
+      })[0]
+      console.log(apitype.text.substring(4, apitype.text.length - 2))
+
+      let comp_name = apitype.text.substring(4, apitype.text.length - 2).toLowerCase() + '-params'
+      if(Object.prototype.hasOwnProperty.call(this.$options.components, comp_name))
+        this.currentApitypeParams = comp_name
+      else
+        this.currentApitypeParams = null
     }
+  },
+
+  components: {
+    'servicecall-params': ServiceCallParams,
   }
 }
 
