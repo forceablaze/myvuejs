@@ -17,11 +17,22 @@ from pecker.models import PeckerTaskStatus, PeckerTaskStatusToString
 
 from pecker.models import CVLog, LogMeta
 
+from django.conf import settings
+
 import re
 
 @shared_task
 def add(x, y):
     return x + y
+
+@shared_task
+def getSymbolValue(tag, symbolName):
+    symbols = settings.SYMBOL_TABLE.getSymbolsByTag(tag)
+    for sym_hash in symbols:
+        symbol = symbols[sym_hash]
+        if symbol.getSymbolShortName() == symbolName:
+            return symbol.getSymbolConvertedValue()
+    return None
 
 @shared_task(bind=True)
 def search_text_task(self, string, seq, pattern):
@@ -93,25 +104,38 @@ def searchHexString(logs, hexString):
 
     return list(filter(lambda x:  x['index'] in indexs, logs))
 
+
+def createPeckerTask(task_id, log_id, search=False):
+
+    outputUUID = str(uuid.uuid4())
+
+    peckerTask = PeckerTask(task_id = task_id,
+        status = PeckerTaskStatusToString(PeckerTaskStatus.CREATED),
+        log_id = log_id,
+        output = outputUUID,
+        search = search)
+
+
+    peckerTask.status = PeckerTaskStatusToString(PeckerTaskStatus.RUNNING)
+    peckerTask.save()
+
+    return peckerTask
+
+
 @shared_task(bind=True)
-def search_log_exec(self, peckerTask, apitype, log_format, text,
+def search_log_exec(self, log_id, jsonFile, apitype, log_format, text,
         hexString, params_items, beforeAfter):
 
-    fileStatus = None
-    try:
-        fileStatus = File.objects.get(id=peckerTask.log_id)
-    except ObjectDoesNotExist:
-        content = {'message': 'No such log id ({}) found.'.format(peckerTask.log_id)}
-        return Response(content, status=status.HTTP_200_OK)
+    taskUUIDStr = search_log_exec.request.id
+    searchTask = createPeckerTask(taskUUIDStr, log_id, search=True)
 
-    jsonFile = Path(Path(fileStatus.file.path).parent, peckerTask.output).resolve()
     print('read {}'.format(jsonFile))
 
     content = {'error': 'something error.'}
-
     try:
         f = open(jsonFile, 'r')
         logObj = json.load(f)
+        f.close()
     except ValueError:
         print('JSON file format error')
         return Response({'error': 'JSON file format error.'}, status=status.HTTP_200_OK)
@@ -130,7 +154,26 @@ def search_log_exec(self, peckerTask, apitype, log_format, text,
         print('search hex')
         _logs = searchHexString(_logs, hexString)
 
-    return [logObj, _logs]
+    for param_name, obj in params_items.items():
+        print(param_name)
+        print(obj['name'])
+        print(obj['dest'])
+
+        value = getSymbolValue(param_name, obj['name'])
+        if value is not None:
+            print('check {} with value {}'.format(obj['dest'], value))
+        else:
+            print('not found')
+
+    indexs = [ log['index'] for log in _logs ]
+
+    output = Path(settings.MEDIA_ROOT, searchTask.output).resolve()
+
+    with open(output, 'w') as file:
+        json.dump(indexs, file)
+
+    searchTask.status = PeckerTaskStatusToString(PeckerTaskStatus.SUCCESS)
+    searchTask.save()
 
 @shared_task(bind=True)
 def pecker_exec(self, log_id = None):
@@ -187,10 +230,4 @@ def pecker_exec(self, log_id = None):
         print('{} not found.'.format(outputFilePath))
         peckerTask.status = PeckerTaskStatusToString(PeckerTaskStatus.FAILED)
 
-    #cvlog = createCVLog(fileStatus, logObj)
-    #cvlog.save()
-
-    #importLogMeta(cvlog, logObj['logs'])
-
     peckerTask.save()
-

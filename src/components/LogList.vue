@@ -99,6 +99,11 @@ export default {
         })
 
         this.peckerTaskObjs.forEach((task) => {
+
+          // ignore searching task
+          if(task.search)
+            return
+
           let logProfile = this.findLogProfile(task.log_id)
           let { type, color } = this.checkTaskIconType(task.status)
 

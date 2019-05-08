@@ -44,6 +44,8 @@ class PeckerTask(models.Model):
 
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    search = models.BooleanField(default=False)
+
 class CVLog(models.Model):
 
     file = models.ForeignKey(File, on_delete=models.CASCADE)

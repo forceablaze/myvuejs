@@ -134,13 +134,11 @@ export default {
             this.retrieveTaskStatus(task_id)
           }
           else if(response.data.status == 'success') {
-            //this.$refs.processProgress.hide()
             this.hideProgressBar()
 
             this.showPopupMessageBox('Success')
           }
           else if(response.data.status == 'failed') {
-            //this.$refs.processProgress.hide()
             this.hideProgressBar()
             this.showPopupMessageBox('Failed')
           }

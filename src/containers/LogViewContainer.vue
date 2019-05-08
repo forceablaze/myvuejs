@@ -120,6 +120,8 @@ import LogComponent from '@/components/LogComponent'
 import SearchDialog from '@/components/SearchDialog'
 import GotoLogDialog from '@/components/GotoLogDialog'
 
+import { delay } from '@/utils'
+
 export default {
   data() {
     return {
@@ -214,16 +216,71 @@ export default {
       })
     },
 
+    showPopupMessageBox(message) {
+      this.$store.dispatch('SHOW_POPUP_MESSAGE', {
+        'title': message
+      })
+    },
+
+    hideProgressBar() {
+      this.$store.dispatch('HIDE_PROCESS_PROGRESS')
+    },
+
+    retrieveTaskStatus(task_id) {
+      delay(5000)('retry').then((result) => {
+        console.log('retrieve task:' + task_id)
+
+        this.axios.get('/pecker/' +  task_id)
+        .then(response => {
+          // Automatic transforms for JSON data
+          console.log(response.data.status)
+          this.taskData = response.data
+
+          if(response.data.status == 'running') {
+            this.retrieveTaskStatus(task_id)
+          }
+          else if(response.data.status == 'success') {
+            this.hideProgressBar()
+
+            this.retrieveFilteredLog(task_id)
+          }
+          else if(response.data.status == 'failed') {
+            this.hideProgressBar()
+            this.showPopupMessageBox('Failed')
+          }
+          else {
+            console.log('retry')
+            this.retrieveTaskStatus(task_id)
+          }
+        })
+        .catch(error => {
+          console.log(error)
+        });
+      });
+    },
+
+    retrieveFilteredLog(task_id) {
+      this.axios.post('/pecker/cvlog/' + task_id + '/search', { 'retrieve' : true })
+      .then(response => {
+        console.log(response.data)
+      })
+      .catch(error => {
+      })
+    },
+
     searchLog(data) {
       console.log('search log')
       console.log(data)
 
       this.$store.dispatch('SHOW_PROCESS_PROGRESS', {
-        'title': 'Loading...'
+        'title': 'Searching...'
       })
 
       this.axios.post('/pecker/cvlog/' + this.task_id + '/search', data)
       .then(response => {
+        this.retrieveTaskStatus(response.data.task_id)
+
+        /*
         // relese obj
         this.searchResultLogs = null
 
@@ -240,6 +297,9 @@ export default {
         })
 
         this.showSearchResult = true
+        */
+
+        /*
 
         let run = () => {
           let newHeight = document.body.scrollHeight
@@ -258,8 +318,7 @@ export default {
         }
 
         this.watchScrollHeightTimer = setTimeout(run, 200)
-
-        this.$store.dispatch('HIDE_PROCESS_PROGRESS')
+        */
       })
       .catch(error => {
 

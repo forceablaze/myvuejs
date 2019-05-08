@@ -14,8 +14,6 @@ from rest_framework import status
 from .models import PeckerTask
 from .serializers import PeckerTaskSerializer
 
-from cvlog.symbol import SymbolTable
-
 from rest_framework import mixins
 
 import io, re
@@ -28,8 +26,6 @@ from .tasks import pecker_exec, add, search_text_task, search_log_exec
 
 CVLOG_CACHE = {}
 PER_PAGE_COUNT = 200
-
-symbolTable = SymbolTable.loadSymbolTable(settings.SYMBOL_TABLE_PATH)
 
 REVERSE_TABLE = {
  'funcid': None,
@@ -167,9 +163,13 @@ class CVLogRetrieveView(RetrieveAPIView):
 
         return self.responseLogJSON(peckerTask)
 
-class CVLogSearchView(mixins.CreateModelMixin, GenericAPIView):
+class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPIView):
+
+    model = PeckerTask
+    queryset = PeckerTask.objects.all()
     permission_classes = (AllowAny, )
     renderer_classes = (JSONRenderer, )
+    serializer_class = PeckerTaskSerializer
 
     def responseLogJSON(self, logObj, logs, indexs):
 
@@ -190,16 +190,14 @@ class CVLogSearchView(mixins.CreateModelMixin, GenericAPIView):
 
         return Response(content, status=status.HTTP_200_OK)
 
-    def searchLog(self, peckerTask, apitype, log_format,
-            text, hexString, params_items, beforeAfter = 10):
+    def searchLog(self, peckerTask, apitype, logFormat,
+            text, hexs, params, beforeAfter = 10):
 
-        result = search_log_exec(peckerTask, apitype, log_format, text,
-            hexString, params_items, beforeAfter)
+        jsonFile = self.getLogJsonPath(peckerTask)
 
-        logObj = result[0]
-        _logs = result[1]
+        r = search_log_exec.delay(peckerTask.log_id, jsonFile, apitype, logFormat, text,
+            hexs, params, beforeAfter)
 
-        indexs = [ log['index'] for log in _logs ]
         '''
 
         beforeAfterIndexs = []
@@ -207,12 +205,62 @@ class CVLogSearchView(mixins.CreateModelMixin, GenericAPIView):
             beforeAfterIndexs += [i for i in range(idx - 10, idx + 10)]
  
         _logs = list(filter(lambda x:  x['index'] in beforeAfterIndexs, originLogs))
+
+
+        return self.responseLogJSON(logObj, _logs, indexs)
         '''
+        return Response({'task_id': r.id})
+
+    def getLogJsonPath(self, peckerTask):
+
+        fileStatus = None
+        try:
+            fileStatus = File.objects.get(id=peckerTask.log_id)
+        except ObjectDoesNotExist:
+            return None
+
+        jsonFile = Path(Path(fileStatus.file.path).parent, peckerTask.output).resolve()
+
+        return str(jsonFile)
+
+
+    def showSearchResult(self, peckerTask):
+
+        if not peckerTask.search:
+            return Response({'message': 'Invalid task.'})
+
+        content = {}
+        indexs = None
+        try:
+            f = open(Path(settings.MEDIA_ROOT, peckerTask.output), 'r')
+            indexs = json.load(f)
+            f.close()
+        except ValueError:
+            return Response({'message': 'JSON file format error'})
+        except FileNotFoundError:
+            return Response({'message': '{} not found.'.format(peckerTask.output)})
+
+        parentPeckerTask = None
+        try:
+            parentPeckerTask = PeckerTask.objects.get(id=peckerTask.log_id, search=False)
+        except ObjectDoesNotExist:
+            return Response({'message': 'Invalid task.'})
+
+        jsonFile = self.getLogJsonPath(parentPeckerTask)
+        try:
+            f = open(jsonFile, 'r')
+            logObj = json.load(f)
+            f.close()
+        except ValueError:
+            return Response({'error': 'JSON file format error.'}, status=status.HTTP_200_OK)
+        except FileNotFoundError:
+            return Response({'error': 'No file found.'}, status=status.HTTP_200_OK)
+
+        _logs = logObj['logs']
 
         return self.responseLogJSON(logObj, _logs, indexs)
 
     def post(self, request, task_id, *args, **kwargs):
-        # get task by log_id
 
         peckerTask = None
         try:
@@ -221,16 +269,16 @@ class CVLogSearchView(mixins.CreateModelMixin, GenericAPIView):
             content = {'message': 'No such task_id id ({}) found.'.format(task_id)}
             return Response(content, status=status.HTTP_200_OK)
 
+        # retrieve search result
+        if 'retrieve' in request.data:
+            if request.data['retrieve']:
+                return self.showSearchResult(peckerTask)
+
         apitype = None
         logFormat = None
         text = None
         hexs = None
         params = None
-        '''
-        params[0] = 123
-        params[1] = 345
-        ...
-        '''
 
         if 'apitype' in request.data:
             apitype = request.data['apitype']
