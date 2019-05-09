@@ -37,7 +37,7 @@
             <td>{{ props.item.flag }}</td>
             <td>{{ props.item.direction }}</td>
             <td>{{ props.item.logid }}</td>
-            <td v-if="props.item.format=='binary'">{{ props.item.formatted_text.substring(0, 90) }}</td>
+            <td v-if="props.item.format=='binary'">{{ checkElement(props.item.formatted_text).substring(0, 90) }}</td>
             <td v-else-if="props.item.format=='text'">{{ props.item.text.substring(0, 90) }}</td>
         </tr>
       </template>
@@ -86,7 +86,7 @@
               <td>{{ props.item.flag }}</td>
               <td>{{ props.item.direction }}</td>
               <td>{{ props.item.logid }}</td>
-              <td v-if="props.item.format=='binary'">{{ props.item.formatted_text }}</td>
+              <td v-if="props.item.format=='binary'">{{ checkElement(props.item.formatted_text) }}</td>
               <td v-else-if="props.item.format=='text'">{{ props.item.text }}</td>
             </tr>
           </template>
@@ -176,6 +176,12 @@ export default {
     }
   },
   methods: {
+    checkElement(element) {
+      if(element == null)
+        return 'null'
+      return element
+    },
+
     checkAPIType(apitype) {
       return isNaN(Number(apitype))
     },
