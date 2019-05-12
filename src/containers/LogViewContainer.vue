@@ -13,91 +13,16 @@
     <v-container
       class="scroll-y"
     >
-
-    <v-data-table
-      ref="table"
-      :headers="headers"
-      :items="logs"
-      :expand="true"
-      item-key="index"
-      loading="true"
-      :rows-per-page-items="rowsPerPageItems"
-			:pagination.sync="pagination"
-      hide-actions
-    >
-
-      <template v-slot:items="props">
-        <tr @click="itemClicked(props)"
-          v-bind:style="[highlight[props.index] ? { 'background-color': '#FF3333' } : { 'background-color': '#CBFFD3' }]"
-        >
-            <td>{{ props.item.index }}</td>
-            <td>{{ props.item.time }}</td>
-            <td v-if="checkAPIType(props.item.apitype)">{{ props.item.apitype }}</td>
-            <td v-else>{{ 'PF ' + props.item.own_domain + '/' + props.item.own_subsys  }}</td>
-            <td>{{ props.item.flag }}</td>
-            <td>{{ props.item.direction }}</td>
-            <td>{{ props.item.logid }}</td>
-            <td v-if="props.item.format=='binary'">{{ checkElement(props.item.formatted_text).substring(0, 90) }}</td>
-            <td v-else-if="props.item.format=='text'">{{ props.item.text.substring(0, 90) }}</td>
-        </tr>
-      </template>
-      <template v-slot:expand="props">
-        <log-component
-          :log="props.item"
-        >
-        </log-component>
-      </template>
-    </v-data-table>
+      <logdata-table
+        :logs="logs"
+        :rowsPerPage="200"
+      />
     </v-container>
 
 
     <div
       v-show="showSearchResult"
     >
-      <v-flex d-flex xs12 style="background-color: #DDDDDD;">
-        <span>Search Result</span>
-      </v-flex>
-
-      <v-container
-        class="scroll-y"
-        style="max-height: 400px"
-      >
-
-        <v-data-table
-          height="400"
-          ref="table"
-          :headers="headers"
-          :items="searchResultLogs"
-          :expand="true"
-          item-key="index"
-          loading="true"
-          hide-headers
-          :rows-per-page-items="searchRowsPerPageItems"
-          :pagination.sync="searchPagination"
-        >
-          <template v-slot:items="props">
-            <tr @click="itemClicked(props)"
-              v-bind:style="{ 'background-color': '#CBFFD3' }"
-            >
-              <td>{{ props.item.index }}</td>
-              <td>{{ props.item.time }}</td>
-              <td v-if="checkAPIType(props.item.apitype)">{{ props.item.apitype }}</td>
-              <td v-else>{{ props.item.apitype + ' ' + props.item.own_domain + '/' + props.item.own_subsys  }}</td>
-              <td>{{ props.item.flag }}</td>
-              <td>{{ props.item.direction }}</td>
-              <td>{{ props.item.logid }}</td>
-              <td v-if="props.item.format=='binary'">{{ checkElement(props.item.formatted_text) }}</td>
-              <td v-else-if="props.item.format=='text'">{{ props.item.text }}</td>
-            </tr>
-          </template>
-          <template v-slot:expand="props">
-            <log-component
-              :log="props.item"
-            >
-           </log-component>
-          </template>
-        </v-data-table>
-      </v-container>
     </div>
 
   </v-container>
@@ -120,21 +45,15 @@ import LogComponent from '@/components/LogComponent'
 import SearchDialog from '@/components/SearchDialog'
 import GotoLogDialog from '@/components/GotoLogDialog'
 
+import LogDataTable from '@/components/LogDataTable'
+
 import { delay } from '@/utils'
 
 export default {
   data() {
     return {
-      logs: [],
-      searchResultLogs: [],
       highlight: [],
-      bodyHeight: 0,
-      expand: false,
-      count: 0,
-      log_obj: {},
       showAll: false,
-      showSearchResult: false,
-      watchScrollHeightTimer: undefined,
       headers: [
         { text: 'index', value: 'index'},
         { text: 'time', value: 'time' },
@@ -144,14 +63,6 @@ export default {
         { text: 'logid', value: 'logid' },
         { text: 'data', value: 'data' },
       ],
-      rowsPerPageItems: [{text: 'All', value: -1}],
-      pagination: {
-        rowsPerPage: 200
-      },
-      searchRowsPerPageItems: [{text: 'All', value: -1}],
-      searchPagination: {
-        rowsPerPage: 20
-      },
     }
   },
 
@@ -159,11 +70,18 @@ export default {
 
   computed: {
     'pageInfo' () {
+      console.log(this.log_obj.total_pages)
       return 'page: ' + this.page + '/' + this.log_obj.total_pages
     },
-    'upperContainerHeight' () {
-      return String(this.bodyHeight - 800) + 'px'
-    }
+    log_obj () {
+      return this.$store.state.cvlog.log_obj
+    },
+    logs () {
+      return this.$store.state.cvlog.log_obj.logs
+    },
+    searchResultLogs () {
+      return this.$store.state.cvlog.search_logs
+    },
   },
 
   watch: {
@@ -176,36 +94,9 @@ export default {
     }
   },
   methods: {
-    checkElement(element) {
-      if(element == null)
-        return 'null'
-      return element
-    },
-
-    checkAPIType(apitype) {
-      return isNaN(Number(apitype))
-    },
     handleResize() {
       console.log('size changed')
       window.scrollTo(0, document.body.scrollHeight)
-    },
-
-    itemClicked(props) {
-      props.expanded = !props.expanded
-    },
-
-    showAllLog() {
-      for(let i = 0; i < this.logs.length; i += 1) {
-        const log = this.logs[i]
-        this.$set(this.$refs.table.expanded, log.index, true)
-      }
-    },
-    // Reset the panel
-    hideAllLog() {
-      for(let i = 0; i < this.logs.length; i += 1) {
-        const log = this.logs[i]
-        this.$set(this.$refs.table.expanded, log.index, false)
-      }
     },
 
     search() {
@@ -266,9 +157,27 @@ export default {
     },
 
     retrieveFilteredLog(task_id) {
+      this.$store.dispatch('SHOW_PROCESS_PROGRESS', {
+        'title': 'Loading...'
+      })
+
       this.axios.post('/pecker/cvlog/' + task_id + '/search', { 'retrieve' : true })
       .then(response => {
         console.log(response.data)
+
+        // relese obj
+        //this.searchResultLogs = null
+
+        // Automatic transforms for JSON data
+        //this.searchResultLogs = response.data.logs.slice(0, 3)
+
+        this.$store.dispatch('UPDATE_CVLOG_SEARCH_OBJECT', {
+          'search_logs': response.data.logs
+        })
+
+        this.$store.dispatch('HIDE_PROCESS_PROGRESS')
+        this.$store.dispatch('SHOW_BOTTOM_CONTAINER')
+
       })
       .catch(error => {
       })
@@ -285,46 +194,6 @@ export default {
       this.axios.post('/pecker/cvlog/' + this.task_id + '/search', data)
       .then(response => {
         this.retrieveTaskStatus(response.data.task_id)
-
-        /*
-        // relese obj
-        this.searchResultLogs = null
-
-        // Automatic transforms for JSON data
-        this.searchResultLogs = response.data.logs
-
-
-        let lastHeight = document.body.scrollHeight
-        console.log(lastHeight)
-
-        this.updateToolBar('BACK', () => {
-          this.fetchLog((this.page - 1) * 200)
-          this.showSearchResult = false
-        })
-
-        this.showSearchResult = true
-        */
-
-        /*
-
-        let run = () => {
-          let newHeight = document.body.scrollHeight
-
-          if(newHeight != lastHeight) {
-            window.scrollTo(0, newHeight)
-            this.bodyHeight = newHeight
-            clearTimeout(this.watchScrollHeightTimer)
-            return
-          }
-
-          if(this.watchScrollHeightTimer)
-            clearTimeout(this.watchScrollHeightTimer)
-
-          this.watchScrollHeightTimer = setTimeout(run, 200)
-        }
-
-        this.watchScrollHeightTimer = setTimeout(run, 200)
-        */
       })
       .catch(error => {
 
@@ -383,13 +252,10 @@ export default {
         from: from,
       })
       .then(response => {
-        // relese obj
-        this.log_obj = null
-        delete this.log_obj
 
-        // Automatic transforms for JSON data
-        this.log_obj = response.data
-        this.logs = this.log_obj.logs
+        this.$store.dispatch('UPDATE_CVLOG_OBJECT', {
+         'log_obj': response.data
+        })
 
         doneHandler()
         this.updateToolBar(this.pageInfo)
@@ -408,13 +274,6 @@ export default {
     },
   
     updateToolBar(info, handler) {
-      let text = ''
-      if(!this.showAll) {
-        text = 'show all'
-      }
-      else {
-        text = 'hide'
-      }
 
       this.$store.dispatch('UPDATE_TOOLBAR_MENU', {
         'title': this.log_obj.product + '/' + this.log_obj.serial_number,
@@ -427,32 +286,12 @@ export default {
         ]})
     },
 
-    showHideLog(e) {
-      this.showAll = !this.showAll
-
-      if(this.showAll) {
-        this.showAllLog()
-      }
-      else {
-        this.hideAllLog()
-      }
-      this.updateToolBar()
-    }
   },
 
   ready: function () {
-    window.addEventListener('resize', this.handleResize)
   },
 
   beforeDestroy: function () {
-    window.removeEventListener('resize', this.handleResize)
-    clearInterval(this.watchScrollHeightTimer)
-    this.logs = null
-    delete this.logs
-    this.log_obj = null
-    delete this.log_obj
-    this.searchResultLogs = null
-    delete this.searchResultLogs
   },
 
   mounted() {
@@ -464,7 +303,8 @@ export default {
   components: {
     LogComponent,
     SearchDialog,
-    GotoLogDialog
+    GotoLogDialog,
+    'logdata-table': LogDataTable,
   }
 }
 

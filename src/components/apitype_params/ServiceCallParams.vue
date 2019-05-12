@@ -22,12 +22,17 @@ export default {
     return {
       funcid_items: funcid_items,
       execreq_items: execreq_items,
-      params: {}
+      params: {},
     }
   },
   methods: {
     onChanged(obj) {
-      this.params[obj.label] = { name: obj.item.text, dest: obj.dest }
+      // when checkbox not checked, set null
+      if(obj.item === undefined)
+        this.params[obj.label] = null
+      else
+        this.params[obj.label] = { name: obj.item.text, dest: obj.dest }
+
       this.$emit('change', this.params)
     }
   },

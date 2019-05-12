@@ -42,7 +42,7 @@
         :handler="menu.handler">
       </toolbar-component>
     </v-toolbar>
-    <v-content>
+    <v-content style="height:100%;">
 			<uploadfile-dialog ref="upload_dialog"
         @uploading="onUploading"
         @success="onUploadSuccess"
@@ -53,12 +53,64 @@
         :handler="onOkClick"
       ></popup-messagebox>
       <router-view></router-view>
+
+	    <transition name="fadeHeight">
+	      <div class="bottom-container" v-if="showBottomContainer">
+
+        <v-flex d-flex xs12 style="background-color: #DDDDDD;">
+          <span>Search Result</span>
+        </v-flex>
+
+          <v-container
+            class="scroll-y"
+            style="max-height: 400px"
+          >
+            <logdata-table
+              :logs="searchResultLogs"
+              :rowsPerPage="20"
+            />
+          </v-container>
+
+	      </div>
+
+	    </transition>
     </v-content>
     <v-footer color="indigo" app>
       <span class="white--text">インテグ</span>
+      <v-spacer/>
+      <v-btn flat icon @click.stop="filterButtonClick">
+        <v-icon color="white">filter_list</v-icon>
+      </v-btn>
     </v-footer>
   </v-app>
 </template>
+
+<style>
+
+.bottom-container {
+  background-color: #FFFFFF;
+  bottom: 40px;
+  position: fixed;
+  width: 100%;
+  height: 400px;
+}
+
+.container {
+  max-width: 100%;
+  padding:10px;
+}
+
+.fadeHeight-enter-active,
+.fadeHeight-leave-active {
+  transition: all 0.2s;
+}
+.fadeHeight-enter,
+.fadeHeight-leave-to
+{
+  opacity: 0;
+  height: 0px
+}
+</style>
 
 <script>
 
@@ -66,6 +118,8 @@ import PopupMessageBox from '@/components/PopupMessageBox'
 import UploadFileDialog from '@/components/UploadFileDialog'
 import ProcessProgress from '@/components/ProcessProgress'
 import DynamicToolBarComponent from '@/components/DynamicToolBarComponent'
+
+import LogDataTable from '@/components/LogDataTable'
 
 import { delay } from '@/utils'
 
@@ -82,7 +136,8 @@ export default {
     'uploadfile-dialog': UploadFileDialog,
     'process-progress': ProcessProgress,
     'toolbar-component': DynamicToolBarComponent,
-    'popup-messagebox': PopupMessageBox
+    'popup-messagebox': PopupMessageBox,
+    'logdata-table': LogDataTable,
   },
   props: {
     source: String,
@@ -91,7 +146,11 @@ export default {
   computed: mapState({
     toolBarTitle: state => state.toolbar.title,
 
-    toolBarMenu: state => state.toolbar.menuComponents
+    toolBarMenu: state => state.toolbar.menuComponents,
+
+    searchResultLogs: state => state.cvlog.search_logs,
+
+    showBottomContainer: state => state.bottomcontainer.show,
   }),
 
   watch: {
@@ -106,6 +165,10 @@ export default {
   },
  
   methods: {
+    filterButtonClick() {
+      this.$store.dispatch('TRIGGER_BOTTOM_CONTAINER')
+    },
+
     upload_log() {
       this.$refs.upload_dialog.open()
     },

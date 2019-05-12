@@ -1,10 +1,14 @@
 <template>
       <v-layout row align-center style="max-height: 50px;">
+
+        <v-flex xs12 sm1>
+          <v-checkbox v-model="selected" />
+        </v-flex>
         <v-flex xs12 sm2>
           <v-subheader>{{ label }}</v-subheader>
         </v-flex>
 
-        <v-flex xs12 sm10>
+        <v-flex xs12 sm9>
           <v-card-text>
             <v-autocomplete
               :items="items"
@@ -23,7 +27,8 @@ export default {
 
   data() {
     return {
-      model: 0
+      model: 0,
+      selected: false
     }
   },
 
@@ -36,8 +41,17 @@ export default {
       })
       if(filtered !== undefined) {
         let item = filtered[0]
-        this.$emit('changed', { label: this.label, item: item, dest: this.dest })
+        if(this.selected)
+          this.$emit('changed', { label: this.label, item: item, dest: this.dest })
+        else
+          this.$emit('changed', { label: this.label })
       }
+    }
+  },
+
+  watch: {
+    'selected' (prop) {
+      this.onChanged()
     }
   },
 

@@ -47,15 +47,17 @@
         </v-flex>
       </v-layout>
 
-      <v-layout row align-center>
+      <v-layout row align-center v-if="advanceSearch">
         <v-flex xs12 sm2>
         </v-flex>
         <v-flex xs12 sm10>
-          <component @change="paramsChange" v-if="currentApitypeParams" :is="currentApitypeParams"/>
+          <v-card-text>
+            <component @change="paramsChange" v-if="currentApitypeParams" :is="currentApitypeParams"/>
+          </v-card-text>
         </v-flex>
       </v-layout>
 
-      <v-layout row align-center>
+      <v-layout row align-center v-if="advanceSearch">
         <v-flex xs12 sm2>
           <v-card-text>
             <v-select
@@ -79,7 +81,21 @@
         </v-flex>
       </v-layout>
 
+      <v-layout row align-center v-else>
+        <v-flex xs12 sm2>
+          <v-subheader>formatted text</v-subheader>
+        </v-flex>
+
+        <v-flex xs12 sm10>
+          <v-card-text>
+            <multitext-combobox @change="formattedTextChange"/>
+          </v-card-text>
+        </v-flex>
+      </v-layout>
+
+
       <v-card-actions>
+        <v-switch v-model="advanceSearch" label="advance" />
         <v-spacer></v-spacer>
         <v-btn color="green darken-1" flat="flat" @click="search">
           Search
@@ -95,6 +111,7 @@
 <script>
 
 import ServiceCallParams from '@/components/apitype_params/ServiceCallParams.vue'
+import MultiTextCombobox from '@/components/MultiTextCombobox.vue'
 
 export default {
   name: 'search-dialog',
@@ -102,6 +119,7 @@ export default {
   data () {
     return {
       dialog: false,
+      advanceSearch: false,
       showApitypeInput: '',
       dataAreaLabel: 'text',
       dataAreaValue: '',
@@ -156,6 +174,7 @@ export default {
       ],
       currentApitypeParams: null,
       params: null,
+      formattedTextModel: null
     }
   },
   computed: {
@@ -204,12 +223,23 @@ export default {
 
       data.params = this.params
 
+      if(!this.advanceSearch) {
+        data.formatted_texts = this.formattedTextModel
+      }
+
       this.dialog = false
       this.$emit('search', data)
     },
 
     paramsChange(params) {
+      console.log(this.params)
       this.params = params
+    },
+
+    formattedTextChange(model) {
+      this.formattedTextModel = model.map(v => {
+        return { text: v.text }
+      })
     },
 
     apitypeChange(value) {
@@ -228,6 +258,7 @@ export default {
 
   components: {
     'servicecall-params': ServiceCallParams,
+    'multitext-combobox': MultiTextCombobox,
   }
 }
 

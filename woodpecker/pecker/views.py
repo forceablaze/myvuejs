@@ -191,21 +191,18 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
         return Response(content, status=status.HTTP_200_OK)
 
     def searchLog(self, peckerTask, apitype, logFormat,
-            text, hexs, params, beforeAfter = 10):
+            text, hexs, params, formatted_texts, beforeAfter = 10):
 
         jsonFile = self.getLogJsonPath(peckerTask)
 
         r = search_log_exec.delay(peckerTask.log_id, jsonFile, apitype, logFormat, text,
-            hexs, params, beforeAfter)
+            hexs, params, formatted_texts, beforeAfter)
 
         '''
 
         beforeAfterIndexs = []
         for idx in indexs:
             beforeAfterIndexs += [i for i in range(idx - 10, idx + 10)]
- 
-        _logs = list(filter(lambda x:  x['index'] in beforeAfterIndexs, originLogs))
-
 
         return self.responseLogJSON(logObj, _logs, indexs)
         '''
@@ -227,7 +224,7 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
     def showSearchResult(self, peckerTask):
 
         if not peckerTask.search:
-            return Response({'message': 'Invalid task.'})
+            return Response({'message': 'Not search task.'})
 
         content = {}
         indexs = None
@@ -242,7 +239,7 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
 
         parentPeckerTask = None
         try:
-            parentPeckerTask = PeckerTask.objects.get(id=peckerTask.log_id, search=False)
+            parentPeckerTask = PeckerTask.objects.get(log_id=peckerTask.log_id, search=False)
         except ObjectDoesNotExist:
             return Response({'message': 'Invalid task.'})
 
@@ -257,6 +254,7 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
             return Response({'error': 'No file found.'}, status=status.HTTP_200_OK)
 
         _logs = logObj['logs']
+        _logs = list(filter(lambda x:  x['index'] in indexs, _logs))
 
         return self.responseLogJSON(logObj, _logs, indexs)
 
@@ -275,15 +273,16 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
                 return self.showSearchResult(peckerTask)
 
         apitype = None
-        logFormat = None
+        log_format = None
         text = None
         hexs = None
         params = None
+        formatted_texts = None
 
         if 'apitype' in request.data:
             apitype = request.data['apitype']
-        if 'logFormat' in request.data:
-            logFormat = request.data['log_format']
+        if 'log_format' in request.data:
+            log_format = request.data['log_format']
         if 'text' in request.data:
             text = request.data['text']
         if 'hexs' in request.data:
@@ -291,11 +290,16 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
         if 'params' in request.data:
             params = request.data['params']
 
+        if 'formatted_texts' in request.data:
+            formatted_texts = request.data['formatted_texts']
+
+
         print('apitype: {}'.format(apitype))
-        print('log_format: {}'.format(logFormat))
+        print('log_format: {}'.format(log_format))
         print('text: {}'.format(text))
         print('hexs: {}'.format(hexs))
         print('params: {}'.format(params))
         #params: {'funcid': {'name': 'FimsExecute', 'dest': 'logid'}, 'execreq': {'name': 'CursorClose', 'dest': 'part1'}}
 
-        return self.searchLog(peckerTask, apitype, logFormat, text, hexs, params)
+        return self.searchLog(peckerTask, apitype, log_format,
+                text, hexs, params, formatted_texts)

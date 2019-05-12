@@ -19,20 +19,15 @@ from pecker.models import CVLog, LogMeta
 
 from django.conf import settings
 
+from pecker.comparelog import isLogParamEqual
+from pecker.comparelog import isLogHasParams
+from pecker.comparelog import filterLogWithParam
+
 import re
 
 @shared_task
 def add(x, y):
     return x + y
-
-@shared_task
-def getSymbolValue(tag, symbolName):
-    symbols = settings.SYMBOL_TABLE.getSymbolsByTag(tag)
-    for sym_hash in symbols:
-        symbol = symbols[sym_hash]
-        if symbol.getSymbolShortName() == symbolName:
-            return symbol.getSymbolConvertedValue()
-    return None
 
 @shared_task(bind=True)
 def search_text_task(self, string, seq, pattern):
@@ -54,8 +49,7 @@ def search_text_task(self, string, seq, pattern):
 
     return indexs
 
-def searchText(logs, string):
-    print('searchText')
+def searchLogText(logs, keys, string):
 
     MAGIC_NUMBER = bytearray.fromhex('494e544547')
     pattern = MAGIC_NUMBER.decode()
@@ -64,13 +58,18 @@ def searchText(logs, string):
 
     for i in range(0, len(logs)):
         log = logs[i]
-        if 'text' not in log:
-            continue
-        text = log['text']
 
-        strIO.write(pattern)
-        strIO.write(str(log['index']) + 'FF')
-        strIO.write(text)
+        for key in keys:
+            if key not in log:
+                continue
+            text = log[key]
+
+            if text is None:
+                continue
+
+            strIO.write(pattern)
+            strIO.write(str(log['index']) + 'FF')
+            strIO.write(text)
 
     seq = strIO.getvalue()
     strIO.close()
@@ -104,6 +103,12 @@ def searchHexString(logs, hexString):
 
     return list(filter(lambda x:  x['index'] in indexs, logs))
 
+def searchFormattedTexts(logs, formattedTexts):
+
+    for formatted in formattedTexts:
+        print('search text {}'.format(formatted['text']))
+        logs = searchLogText(logs, ['formatted_text', 'text'], formatted['text'])
+    return logs
 
 def createPeckerTask(task_id, log_id, search=False):
 
@@ -124,7 +129,7 @@ def createPeckerTask(task_id, log_id, search=False):
 
 @shared_task(bind=True)
 def search_log_exec(self, log_id, jsonFile, apitype, log_format, text,
-        hexString, params_items, beforeAfter):
+        hexString, params_items, formatted_texts, beforeAfter):
 
     taskUUIDStr = search_log_exec.request.id
     searchTask = createPeckerTask(taskUUIDStr, log_id, search=True)
@@ -145,27 +150,25 @@ def search_log_exec(self, log_id, jsonFile, apitype, log_format, text,
      #originLogs = copy.deepcopy(logObj['logs'])
     _logs = logObj['logs']
     if apitype:
-        _logs = list(filter(lambda x: x['apitype'] == apitype, _logs))
+        _logs = filterLogWithParam(_logs, 'apitype', apitype)
     if log_format:
-        _logs = list(filter(lambda x: x['format'] == log_format, _logs))
-    if text:
-        _logs = searchText(_logs, text)
-    elif hexString:
-        print('search hex')
-        _logs = searchHexString(_logs, hexString)
+        _logs = filterLogWithParam(_logs, 'format', log_format)
 
-    for param_name, obj in params_items.items():
-        print(param_name)
-        print(obj['name'])
-        print(obj['dest'])
-
-        value = getSymbolValue(param_name, obj['name'])
-        if value is not None:
-            print('check {} with value {}'.format(obj['dest'], value))
-        else:
-            print('not found')
+    # is array
+    if formatted_texts:
+        _logs = searchFormattedTexts(_logs, formatted_texts)
+    # advance search
+    else:
+        if text:
+            _logs = searchLogText(_logs, ['text'], text)
+        elif hexString:
+            print('search hex')
+            _logs = searchHexString(_logs, hexString)
+        if params_items is not None:
+            _logs = list(filter(lambda x: isLogHasParams(x, params_items), _logs))
 
     indexs = [ log['index'] for log in _logs ]
+    print('found {} logs'.format(len(indexs)))
 
     output = Path(settings.MEDIA_ROOT, searchTask.output).resolve()
 
