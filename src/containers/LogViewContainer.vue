@@ -18,13 +18,6 @@
         :rowsPerPage="200"
       />
     </v-container>
-
-
-    <div
-      v-show="showSearchResult"
-    >
-    </div>
-
   </v-container>
 </template>
 
@@ -163,7 +156,6 @@ export default {
 
       this.axios.post('/pecker/cvlog/' + task_id + '/search', { 'retrieve' : true })
       .then(response => {
-        console.log(response.data)
 
         // relese obj
         //this.searchResultLogs = null
