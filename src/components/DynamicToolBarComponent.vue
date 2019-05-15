@@ -2,9 +2,12 @@
 
   <component
     ref="root"
-    v-bind:is="componentType"
+    v-bind:is="compType"
     :icon="showIcon"
     :flat="!showIcon"
+    :title="title"
+    :items="items"
+    @click="clickHandler"
     >
     <template v-if="text">
       <div>{{ text }}</div>
@@ -19,6 +22,7 @@
 <script>
 
 import { isFunction } from '@/utils'
+import ItemListButton from '@/components/buttons/ItemListBUtton'
 
 export default {
   name: 'toolbar-component',
@@ -33,10 +37,10 @@ export default {
   },
 
   methods: {
-    clickHandler() {
+    clickHandler(data) {
       if(isFunction(this.handler))
-        this.handler()
-    }
+        this.handler(data)
+    },
   },
 
   computed: {
@@ -44,6 +48,20 @@ export default {
       if(this.type == "icon")
         return true
       return false
+    },
+
+    compType () {
+      if(this.$store.state.toolbar.menuComponents[this.index].compType === undefined)
+        return 'v-btn'
+      return this.$store.state.toolbar.menuComponents[this.index].compType
+    },
+
+    title () {
+      return this.$store.state.toolbar.menuComponents[this.index].title
+    },
+
+    items () {
+      return this.$store.state.toolbar.menuComponents[this.index].items
     },
 
     type () {
@@ -60,11 +78,15 @@ export default {
   },
 
   mounted() {
-    this.$el.addEventListener('click', this.clickHandler)
+    //this.$el.addEventListener('click', this.clickHandler)
   },
 
   beforeDestroy() {
-    this.$el.removeEventListener('click', this.clickHandler)
+    //this.$el.removeEventListener('click', this.clickHandler)
+  },
+
+  components: {
+    'itemlistbutton': ItemListButton,
   }
 }
 

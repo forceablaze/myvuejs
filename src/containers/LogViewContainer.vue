@@ -250,7 +250,15 @@ export default {
         })
 
         doneHandler()
-        this.updateToolBar(this.pageInfo)
+        this.updateToolBar(this.pageInfo, (idx) => {
+          console.log(idx)
+
+          this.$router.push({ name: 'log_view',
+            params: {
+              task_id: this.task_id,
+              page: idx
+          }})
+        })
 
         this.$store.dispatch('HIDE_PROCESS_PROGRESS')
       })
@@ -266,11 +274,17 @@ export default {
     },
   
     updateToolBar(info, handler) {
+      let items = [...Array(this.log_obj.total_pages).keys()].map((idx) => {
+        return {'title': String(idx + 1) }
+      })
 
       this.$store.dispatch('UPDATE_TOOLBAR_MENU', {
         'title': this.log_obj.product + '/' + this.log_obj.serial_number,
         'menuComponents': [
-          { 'type': 'flat', 'text': info, 'handler': handler },
+          { 'compType': 'itemlistbutton', 'title': info,
+            'items': items,
+            'handler': handler
+          },
           { 'type': 'flat', 'text': 'GOTO', 'handler': this.onGotoClick },
           { 'type': 'icon', 'iconType': 'search', 'handler': this.search },
           { 'type': 'icon', 'iconType': 'arrow_back_ios', 'handler': this.fetchBackLog },
