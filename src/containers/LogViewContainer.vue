@@ -15,7 +15,7 @@
     >
       <logdata-table
         :logs="logs"
-        :rowsPerPage="200"
+        :rowsPerPage="perPageCount"
       />
     </v-container>
   </v-container>
@@ -46,6 +46,7 @@ export default {
   data() {
     return {
       highlight: [],
+      perPageCount: 2000,
       showAll: false,
       headers: [
         { text: 'index', value: 'index'},
@@ -72,15 +73,12 @@ export default {
     logs () {
       return this.$store.state.cvlog.log_obj.logs
     },
-    searchResultLogs () {
-      return this.$store.state.cvlog.search_logs
-    },
   },
 
   watch: {
     '$route' (to, from) {
       console.log(to.query)
-      this.fetchLog((this.page - 1) * 200)
+      this.fetchLog((this.page - 1) * this.perPageCount)
     },
     'window.scrollY' (to) {
       console.log('scroll height changed:' + to)
@@ -157,14 +155,13 @@ export default {
       this.axios.post('/pecker/cvlog/' + task_id + '/search', { 'retrieve' : true })
       .then(response => {
 
-        // relese obj
-        //this.searchResultLogs = null
 
-        // Automatic transforms for JSON data
-        //this.searchResultLogs = response.data.logs.slice(0, 3)
+        this.$store.dispatch('UPDATE_CVLOG_SEARCH_TASK_ID', {
+          'search_task_id': task_id
+        })
 
         this.$store.dispatch('UPDATE_CVLOG_SEARCH_OBJECT', {
-          'search_logs': response.data.logs
+          'search_log_obj': response.data
         })
 
         this.$store.dispatch('HIDE_PROCESS_PROGRESS')
@@ -231,7 +228,6 @@ export default {
     },
 
     fetchLog(from, doneHandler = () => {} ) {
-      //let from = (this.page - 1) * 200
       console.log(typeof from)
 
       console.log('fetch log ' + from)
@@ -242,6 +238,7 @@ export default {
       this.axios.post('/pecker/cvlog', {
         task_id: this.task_id,
         from: from,
+        count: this.perPageCount,
       })
       .then(response => {
 
@@ -302,8 +299,7 @@ export default {
 
   mounted() {
     console.log('fetch cvlog')
-
-    this.fetchLog((this.page - 1) * 200)
+    this.fetchLog((this.page - 1) * this.perPageCount)
   },
 
   components: {

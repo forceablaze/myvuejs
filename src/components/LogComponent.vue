@@ -5,7 +5,7 @@
         <v-flex d-flex sm2>
           <v-layout row>
             <v-flex xs12 d-flex>
-              <v-card style="background-color:#88FFFF; max-width: 200px">
+              <v-card style="background-color:#88FFFF; max-width: 200px;">
                 <v-card-text>{{ log.logtype }}</v-card-text>
               </v-card>
               <v-card
@@ -27,7 +27,7 @@
               <v-card
                 style="background-color:#88FFFF;"
               >
-                <v-card-text>{{ payload_size_info }}</v-card-text>
+                <v-card-text>{{ payload_size_info + ', seq: ' + log.seq + ', cputype:' + log.cputype }}</v-card-text>
               </v-card>
             </v-flex>
           </v-layout>
@@ -37,12 +37,12 @@
           <v-layout row>
             <v-flex xs12 d-flex>
               <v-card
-                style="background-color:#13EEFF; font-size:18px;"
+                style="background-color:#13EEFF; font-size:14px;"
               >
                 <v-card-text>{{ 'OwnID: ' + log.own_domain + '/' + log.own_subsys }}</v-card-text>
               </v-card>
               <v-card
-                style="background-color:#13EEFF; font-size:18px;"
+                style="background-color:#13EEFF; font-size:14px;"
               >
 
                 <v-card-text style="max-width: 100%; word-wrap: break-word;">
@@ -50,7 +50,7 @@
                 </v-card-text>
               </v-card>
               <v-card
-                style="background-color:#13EEFF; font-size:18px;"
+                style="background-color:#13EEFF; font-size:14px;"
               >
                 <v-card-text>{{ 'TaskID: ' + log.task_domain + '/' + log.task_subsys }}</v-card-text>
               </v-card>
@@ -64,7 +64,7 @@
             v-if="showRaw"
             :hexs="raw"
           ></hex-viewer-component>
-          <v-card v-else style="font-size: 24px;">
+          <v-card v-else style="font-size: 14px;">
             <v-card-text
               style="white-space: pre-wrap; word-wrap: break-word;"
             >{{ text }}</v-card-text>
@@ -72,7 +72,7 @@
         </v-flex>
       </v-layout>
 
-      <v-flex d-flex style="max-width: 6%;">
+      <v-flex d-flex style="max-width: 80px;">
         <v-layout row wrap>
           <v-flex>
             <v-card
@@ -90,24 +90,13 @@
             <v-card
               style="background-color: #DDFFFF;"
             >
-              <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ log.seq }}</v-card-text>
-            </v-card>
-
-            <v-card
-              style="background-color: #DDFFFF;"
-            >
-              <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ log.cputype }}</v-card-text>
-            </v-card>
-
-            <v-card
-              style="background-color: #DDFFFF;"
-            >
               <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ '0x' + log.position }}</v-card-text>
             </v-card>
             <v-switch
               v-model="showRaw"
-              style="background-color: #EEEEEE;"
-              label="生データ"></v-switch>
+              style="background-color: #EEEEEE; height: 32px;"
+            >
+            </v-switch>
           </v-flex>
         </v-layout>
       </v-flex>
@@ -116,9 +105,13 @@
 
 </template>
 
-<style>
+<style scoped>
 .v-label {
   font-size: 12px;
+}
+
+.v-card__text {
+  padding: 0px;
 }
 
 .v-input__slot {
@@ -152,7 +145,7 @@ export default {
   data() {
     return {
       showRaw: false,
-      panel: false
+      panel: false,
     }
   },
 
