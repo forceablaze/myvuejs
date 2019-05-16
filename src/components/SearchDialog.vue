@@ -246,7 +246,11 @@ export default {
       let apitype = this.apitypeItems.filter((e) => {
         return e.value == value
       })[0]
-      console.log(apitype.text.substring(4, apitype.text.length - 2))
+
+      if(apitype === undefined) {
+        this.currentApitypeParams = null
+        return
+      }
 
       let comp_name = apitype.text.substring(4, apitype.text.length - 2).toLowerCase() + '-params'
       if(Object.prototype.hasOwnProperty.call(this.$options.components, comp_name))
