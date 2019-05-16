@@ -6,6 +6,7 @@
         color="primary"
         dark
         v-on="on"
+        :style="{ fontSize: fontSize + 'px', height: height + 'px' }"
       >
         {{ title }}
       </v-btn>
@@ -38,13 +39,15 @@ export default {
     }
   },
 
-  props: ['title', 'items'],
+  props: ['title', 'items', 'fontSize', 'height'],
 
   methods: {
     click(index) {
       let data = this.items[index]['title']
       this.$emit('click', data)
     }
+  },
+  mounted() {
   }
 }
 

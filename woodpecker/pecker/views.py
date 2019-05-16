@@ -121,7 +121,7 @@ class CVLogRetrieveView(RetrieveAPIView):
         if content['log_total_number'] % count != 0:
             content['total_pages'] = int(content['log_total_number'] / count) + 1
         else:
-            content['total_pages'] = int(content['log_total_number'] / count) + 1
+            content['total_pages'] = int(content['log_total_number'] / count)
 
         return Response(content, status=status.HTTP_200_OK)
 
@@ -171,7 +171,7 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
     renderer_classes = (JSONRenderer, )
     serializer_class = PeckerTaskSerializer
 
-    def responseLogJSON(self, logObj, logs, indexs):
+    def responseLogJSON(self, logObj, logs, indexs, total_log_count, count, page):
 
         content = {}
         content['product'] = logObj['product']
@@ -181,12 +181,15 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
         content['logtype'] = logObj['logtype']
         content['addr_code'] = logObj['addr_code']
         content['logs'] = logs
-        content['log_total_number'] = len(logs)
+        content['log_total_number'] = total_log_count
+        content['page'] = page
         content['indexs'] = indexs
-        if content['log_total_number'] % PER_PAGE_COUNT != 0:
-            content['total_pages'] = int(content['log_total_number'] / PER_PAGE_COUNT) + 1
+        if content['log_total_number'] % count != 0:
+            content['total_pages'] = int(content['log_total_number'] / count) + 1
         else:
-            content['total_pages'] = int(content['log_total_number'] / PER_PAGE_COUNT) + 1
+            content['total_pages'] = int(content['log_total_number'] / count)
+
+        print('total page:{}'.format(content['total_pages']))
 
         return Response(content, status=status.HTTP_200_OK)
 
@@ -221,7 +224,7 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
         return str(jsonFile)
 
 
-    def showSearchResult(self, peckerTask):
+    def showSearchResult(self, peckerTask, count, page):
 
         if not peckerTask.search:
             return Response({'message': 'Not search task.'})
@@ -236,6 +239,12 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
             return Response({'message': 'JSON file format error'})
         except FileNotFoundError:
             return Response({'message': '{} not found.'.format(peckerTask.output)})
+
+        log_from = count * (page - 1)
+        log_to = log_from + count
+        total_log_count = len(indexs)
+
+        indexs = indexs[log_from: log_to]
 
         parentPeckerTask = None
         try:
@@ -253,10 +262,10 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
         except FileNotFoundError:
             return Response({'error': 'No file found.'}, status=status.HTTP_200_OK)
 
+        print('{} {}'.format(log_from, log_to))
         _logs = logObj['logs']
         _logs = list(filter(lambda x:  x['index'] in indexs, _logs))
-
-        return self.responseLogJSON(logObj, _logs, indexs)
+        return self.responseLogJSON(logObj, _logs, indexs, total_log_count, count, page)
 
     def post(self, request, task_id, *args, **kwargs):
 
@@ -270,7 +279,15 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
         # retrieve search result
         if 'retrieve' in request.data:
             if request.data['retrieve']:
-                return self.showSearchResult(peckerTask)
+                count = PER_PAGE_COUNT
+                page = 1
+
+                if 'count' in request.data:
+                    count = request.data['count']
+                if 'page' in request.data:
+                    page = request.data['page']
+
+                return self.showSearchResult(peckerTask, count, page)
 
         apitype = None
         log_format = None

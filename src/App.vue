@@ -54,26 +54,10 @@
       ></popup-messagebox>
       <router-view></router-view>
 
-	    <transition name="fadeHeight">
-	      <div class="bottom-container" v-if="showBottomContainer">
+      <transition name="fadeHeight">
+        <searchresult-container v-if="showBottomContainer" :defaultHeight="300"/>
+      </transition>
 
-        <v-flex d-flex xs12 style="background-color: #DDDDDD;">
-          <span>Search Result</span>
-        </v-flex>
-
-          <v-container
-            class="scroll-y"
-            style="max-height: 400px"
-          >
-            <logdata-table
-              :logs="searchResultLogs"
-              :rowsPerPage="20"
-            />
-          </v-container>
-
-	      </div>
-
-	    </transition>
     </v-content>
     <v-footer color="indigo" app>
       <span class="white--text">インテグ</span>
@@ -87,17 +71,13 @@
 
 <style>
 
-.bottom-container {
-  background-color: #FFFFFF;
-  bottom: 40px;
-  position: fixed;
-  width: 100%;
-  height: 400px;
-}
-
 .container {
   max-width: 100%;
-  padding:10px;
+  padding: 0px;
+}
+
+.bottom-container {
+  background-color: white;
 }
 
 .fadeHeight-enter-active,
@@ -119,7 +99,7 @@ import UploadFileDialog from '@/components/UploadFileDialog'
 import ProcessProgress from '@/components/ProcessProgress'
 import DynamicToolBarComponent from '@/components/DynamicToolBarComponent'
 
-import LogDataTable from '@/components/LogDataTable'
+import SearchResultContainer from '@/containers/SearchResultContainer'
 
 import { delay } from '@/utils'
 
@@ -137,7 +117,7 @@ export default {
     'process-progress': ProcessProgress,
     'toolbar-component': DynamicToolBarComponent,
     'popup-messagebox': PopupMessageBox,
-    'logdata-table': LogDataTable,
+    'searchresult-container': SearchResultContainer,
   },
   props: {
     source: String,
@@ -147,8 +127,6 @@ export default {
     toolBarTitle: state => state.toolbar.title,
 
     toolBarMenu: state => state.toolbar.menuComponents,
-
-    searchResultLogs: state => state.cvlog.search_logs,
 
     showBottomContainer: state => state.bottomcontainer.show,
   }),
@@ -171,6 +149,12 @@ export default {
 
     upload_log() {
       this.$refs.upload_dialog.open()
+    },
+
+    updatePageButton() {
+      let items = [...Array(this.searchResultTotalPage).keys()].map((idx) => {
+        return {'title': String(idx + 1) }
+      })
     },
 
     onOkClick() {
