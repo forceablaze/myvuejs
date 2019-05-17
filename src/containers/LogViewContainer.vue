@@ -46,7 +46,7 @@ export default {
   data() {
     return {
       highlight: [],
-      perPageCount: 2000,
+      perPageCount: 500,
       showAll: false,
       headers: [
         { text: 'index', value: 'index'},
@@ -152,7 +152,11 @@ export default {
         'title': 'Loading...'
       })
 
-      this.axios.post('/pecker/cvlog/' + task_id + '/search', { 'retrieve' : true })
+      this.axios.post('/pecker/cvlog/' + task_id + '/search',
+        {
+          'retrieve' : true,
+          'count': this.perPageCount
+        })
       .then(response => {
 
 

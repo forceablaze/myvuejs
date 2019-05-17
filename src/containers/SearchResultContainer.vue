@@ -45,7 +45,8 @@ export default {
   data() {
     return {
       fontSize: '14',
-      buttonHeight: '20'
+      buttonHeight: '20',
+      perPageCount: 500
     }
   },
 
@@ -66,6 +67,7 @@ export default {
         let response = await this.axios.post('/pecker/cvlog/' + this.task_id + '/search', {
           'retrieve' : true,
           'page': page,
+          'count': this.perPageCount,
         })
 
         this.$store.dispatch('UPDATE_CVLOG_SEARCH_OBJECT', {
