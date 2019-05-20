@@ -16,6 +16,8 @@
       <logdata-table
         :logs="logs"
         :rowsPerPage="perPageCount"
+        :highlight="highlight"
+        :focus="focus"
       />
     </v-container>
   </v-container>
@@ -46,6 +48,7 @@ export default {
   data() {
     return {
       highlight: [],
+      focus: undefined,
       perPageCount: 500,
       showAll: false,
       headers: [
@@ -63,10 +66,6 @@ export default {
   props: ['task_id', 'page'],
 
   computed: {
-    'pageInfo' () {
-      console.log(this.log_obj.total_pages)
-      return 'page: ' + this.page + '/' + this.log_obj.total_pages
-    },
     log_obj () {
       return this.$store.state.cvlog.log_obj
     },
@@ -96,11 +95,15 @@ export default {
     },
 
     gotoLog(index) {
-      this.fetchLog(Number(index), () => {
+      let p = Math.floor(index / this.perPageCount)
+      let firstInPage = p * this.perPageCount
+
+      this.fetchLog(firstInPage, () => {
 
         this.highlight = [...this.logs.values()].map((log, idx) => {
           return log.index == Number(index)
         })
+        this.focus = Number(index)
       })
     },
 
@@ -169,7 +172,7 @@ export default {
         })
 
         this.$store.dispatch('HIDE_PROCESS_PROGRESS')
-        this.$store.dispatch('SHOW_BOTTOM_CONTAINER')
+        this.$store.dispatch('SHOW_SEARCH_CONTAINER')
 
       })
       .catch(error => {
@@ -232,9 +235,10 @@ export default {
     },
 
     fetchLog(from, doneHandler = () => {} ) {
-      console.log(typeof from)
-
       console.log('fetch log ' + from)
+      this.highlight = []
+      this.focus = undefined
+
       this.$store.dispatch('SHOW_PROCESS_PROGRESS', {
         'title': 'Loading...'
       })
@@ -246,18 +250,23 @@ export default {
       })
       .then(response => {
 
+        console.log(response.data.filename)
+        console.log(response.data.size)
         this.$store.dispatch('UPDATE_CVLOG_OBJECT', {
          'log_obj': response.data
         })
 
         doneHandler()
-        this.updateToolBar(this.pageInfo, (idx) => {
-          console.log(idx)
 
-          this.$router.push({ name: 'log_view',
-            params: {
-              task_id: this.task_id,
-              page: idx
+        let page = (from / this.perPageCount) + 1
+        let pageInfo = 'page: ' + page + '/' + this.log_obj.total_pages
+        this.updateToolBar(pageInfo, (idx) => {
+        console.log(idx)
+
+        this.$router.push({ name: 'log_view',
+          params: {
+            task_id: this.task_id,
+            page: idx
           }})
         })
 

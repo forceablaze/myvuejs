@@ -1,6 +1,5 @@
 <template>
         <v-data-table
-          height="400"
           ref="table"
           :headers="headers"
           :items="logs"
@@ -13,17 +12,17 @@
         >
           <template v-slot:items="props">
             <tr @click="itemClicked(props)"
-              v-bind:style="{ 'background-color': '#CBFFD3' }"
+              v-bind:id="'log_' + `${props.item.index}`"
+              v-bind:style="[highlight[props.index] ? { 'background-color': '#FF3333' } : { 'background-color': '#CBFFD3' }]"
             >
               <td>{{ props.item.index }}</td>
-              <td>{{ props.item.time }}</td>
+              <td v-if="!simple">{{ props.item.time }}</td>
               <td v-if="checkAPIType(props.item.apitype)">{{ props.item.apitype }}</td>
               <td v-else>{{ 'PF ' + props.item.own_domain + '/' + props.item.own_subsys  }}</td>
-              <td>{{ props.item.flag }}</td>
-              <td>{{ props.item.direction }}</td>
-              <td>{{ props.item.logid }}</td>
-              <td v-if="props.item.format=='binary'">{{ checkElement(props.item.formatted_text).substring(0, 90) }}</td>
-              <td v-else-if="props.item.format=='text'">{{ props.item.text }}</td>
+              <td v-if="!simple">{{ props.item.flag }}</td>
+              <td v-if="!simple">{{ props.item.direction }}</td>
+              <td v-if="!simple">{{ props.item.logid }}</td>
+              <td>{{ getLogSummaryString(props.item) }}</td>
             </tr>
           </template>
           <template v-slot:expand="props">
@@ -64,7 +63,30 @@ export default {
       pagination: { rowsPerPage: this.rowsPerPage }
     }
   },
-  props: [ "rowsPerPage", "logs"],
+  props: {
+    rowsPerPage: Number,
+    logs: Array,
+    focus: Number,
+    highlight: {
+      type: Array,
+      default: () => { return [] }
+    },
+    simple: {
+      type: Boolean,
+      default: false
+    }
+  },
+
+  watch: {
+    focus: function(val) {
+      this.$nextTick(function () {
+        setTimeout(() => {
+          if(val !== undefined)
+            this.focusTo(val)
+        }, 300)
+      })
+    }
+  },
 
   methods: {
     checkElement(element) {
@@ -73,12 +95,32 @@ export default {
       return element
     },
 
+    getLogSummaryString(item) {
+      if(item.format == 'binary') {
+        let len = 90
+        if(this.simple)
+          len = 30
+        return this.checkElement(item.formatted_text).substring(0, len)
+      }
+      else if(item.format == 'text') {
+        return item.text
+      }
+    },
+
     checkAPIType(apitype) {
       return isNaN(Number(apitype))
     },
 
     itemClicked(props) {
       props.expanded = !props.expanded
+    },
+
+    focusTo(index) {
+      const focusLogElem = this.$el.querySelector("#log_" + index)
+      window.scrollTo({
+        top: focusLogElem.offsetTop,
+        behavior: 'smooth'
+      })
     },
 
     showAllLog() {
@@ -94,8 +136,11 @@ export default {
         this.$set(this.$refs.table.expanded, log.index, false)
       }
     },
-
   },
+
+  mounted() {
+  },
+
   components: {
     LogComponent,
   }

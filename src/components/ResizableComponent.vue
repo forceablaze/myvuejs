@@ -16,15 +16,17 @@
   width: 100%;
   box-sizing: border-box;
   bottom: 0px;
-  background-color: inherit;
+  right: 0px;
+  background-color: white;
+  border-left: 2px solid #DDDDDD;
 }
 
 .resizer.top-center{
   border-radius: 50%;
   width: 10px;
   height: 10px;
-  left: 50%;
-  top: 0;
+  left: 0px;
+  top: 50%;
   cursor: n-resize;
   position: relative;
   box-sizing: border-box;
@@ -41,17 +43,21 @@ export default {
   data() {
     return {
       'height': 0,
+      'width': 0,
       'mouseY': 0,
-      'originHeight': 0
+      'mouseX': 0,
+      'originHeight': 0,
+      'originWidth': 0
     }
   },
 
-  props: ['defaultHeight'],
+  props: ['defaultHeight', 'defaultWidth'],
 
   computed: {
     styleObject () {
       return {
-        height: `${this.height}px`
+        height: '100%',
+        width: `${this.width}` + 'px'
       }
     },
     resizers () {
@@ -63,7 +69,9 @@ export default {
     mouseDown(e) {
       e.preventDefault()
       this.mouseY = e.pageY
+      this.mouseX = e.pageX
       this.originHeight = this.height
+      this.originWidth = this.width
 
       window.addEventListener('mousemove', this.resize)
       window.addEventListener('mouseup', this.stopResize)
@@ -73,7 +81,12 @@ export default {
 
       const diffMouseY = this.mouseY - e.pageY
       const originY = this.resizers.clientHeight + this.resizers.clientTop * 2
+
+      const diffMouseX = this.mouseX - e.pageX
+      const originX = this.resizers.clientWidth
+
       this.height = this.originHeight + diffMouseY
+      this.width = this.originWidth + diffMouseX
     },
     stopResize(e) {
       window.removeEventListener('mousemove', this.resize)
@@ -84,10 +97,8 @@ export default {
     const topCenterResizer = this.$el.querySelector('.resizer.top-center')
     topCenterResizer.addEventListener('mousedown', this.mouseDown)
 
-    if(this.defaultHeight === undefined)
-      this.height = 300
-    else
-      this.height = this.defaultHeight
+    this.height = this.defaultHeight
+    this.width = this.defaultWidth
   },
 
   beforeDestroy() {

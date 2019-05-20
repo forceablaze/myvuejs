@@ -1,6 +1,6 @@
 <template>
 
-  <resizable class="bottom-container" :defaultHeight="defaultHeight">
+  <resizable class="bottom-container" :defaultHeight="defaultHeight" :defaultWidth="defaultWidth">
     <v-layout>
       <v-flex grow  style="background-color: #DDDDDD;">
         <span style="font-size: 20px;">Search Result</span>
@@ -15,7 +15,7 @@
     </v-layout>
 
     <div class="scroll-y" style="height: 100%;">
-      <logdata-table :logs="searchResultLogs" :rowsPerPage="200"/>
+      <logdata-table :logs="searchResultLogs" :rowsPerPage="200" :simple="true"/>
     </div>
   </resizable>
 
@@ -50,7 +50,7 @@ export default {
     }
   },
 
-  props: ['defaultHeight'],
+  props: ['defaultHeight', 'defaultWidth'],
 
   methods: {
     pageButtonClick(idx) {
@@ -74,7 +74,7 @@ export default {
           'search_log_obj': response.data
         })
 
-        this.$store.dispatch('SHOW_BOTTOM_CONTAINER')
+        this.$store.dispatch('SHOW_SEARCH_CONTAINER')
 
       }
       catch(error) {

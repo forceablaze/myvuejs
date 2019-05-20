@@ -55,7 +55,8 @@
       <router-view></router-view>
 
       <transition name="fadeHeight">
-        <searchresult-container v-if="showBottomContainer" :defaultHeight="300"/>
+        <searchresult-container v-if="showSearchContainer"
+          :defaultWidth="300"/>
       </transition>
 
     </v-content>
@@ -74,10 +75,6 @@
 .container {
   max-width: 100%;
   padding: 0px;
-}
-
-.bottom-container {
-  background-color: white;
 }
 
 .fadeHeight-enter-active,
@@ -128,7 +125,7 @@ export default {
 
     toolBarMenu: state => state.toolbar.menuComponents,
 
-    showBottomContainer: state => state.bottomcontainer.show,
+    showSearchContainer: state => state.searchcontainer.show,
   }),
 
   watch: {
@@ -144,7 +141,7 @@ export default {
  
   methods: {
     filterButtonClick() {
-      this.$store.dispatch('TRIGGER_BOTTOM_CONTAINER')
+      this.$store.dispatch('TRIGGER_SEARCH_CONTAINER')
     },
 
     upload_log() {
