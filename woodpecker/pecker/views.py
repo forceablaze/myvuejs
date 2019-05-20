@@ -25,6 +25,7 @@ from file.models import File
 from .tasks import pecker_exec, add, search_text_task, search_log_exec
 
 CVLOG_CACHE = {}
+CVLOG_CACHE_SIZE = 10
 PER_PAGE_COUNT = 200
 
 REVERSE_TABLE = {
@@ -97,6 +98,11 @@ class CVLogRetrieveView(RetrieveAPIView):
 
         if peckerTask.task_id not in CVLOG_CACHE:
             print('NO CACHE FOUND')
+
+            if len(CVLOG_CACHE) >= CVLOG_CACHE_SIZE:
+                print('clear CVLOG_CACHE')
+                CVLOG_CACHE.clear()
+
             try:
                 f = open(jsonFile, 'r')
                 logObj = json.load(f)
@@ -110,6 +116,8 @@ class CVLogRetrieveView(RetrieveAPIView):
 
         print('{} {}'.format(log_from, log_from + count))
         content = {}
+        content['filename'] = CVLOG_CACHE[peckerTask.task_id]['filename']
+        content['size'] = CVLOG_CACHE[peckerTask.task_id]['size']
         content['product'] = CVLOG_CACHE[peckerTask.task_id]['product']
         content['serial_number'] = CVLOG_CACHE[peckerTask.task_id]['serial_number']
         content['time'] = CVLOG_CACHE[peckerTask.task_id]['time']
@@ -174,6 +182,8 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
     def responseLogJSON(self, logObj, logs, indexs, total_log_count, count, page):
 
         content = {}
+        content['filename'] = logObj['filename']
+        content['size'] = logObj['size']
         content['product'] = logObj['product']
         content['serial_number'] = logObj['serial_number']
         content['time'] = logObj['time']
