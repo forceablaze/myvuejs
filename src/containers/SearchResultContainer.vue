@@ -1,11 +1,11 @@
 <template>
 
   <resizable class="bottom-container" :defaultHeight="defaultHeight">
-    <v-layout row>
-      <v-flex style="background-color: #DDDDDD;">
+    <v-layout>
+      <v-flex grow  style="background-color: #DDDDDD;">
         <span style="font-size: 20px;">Search Result</span>
       </v-flex>
-      <v-flex xs1 style="background-color: #DDDDDD;">
+      <v-flex shrink style="background-color: #DDDDDD;">
         <itemlistbutton
           :fontSize="fontSize"
           :height="buttonHeight"
@@ -14,7 +14,7 @@
       </v-flex>
     </v-layout>
 
-    <div class="scroll-y" style="height: 100%; margin-bottom: 36px">
+    <div class="scroll-y" style="height: 100%;">
       <logdata-table :logs="searchResultLogs" :rowsPerPage="200"/>
     </div>
   </resizable>
@@ -34,7 +34,7 @@
 
 import LogDataTable from '@/components/LogDataTable'
 import ResizableComponent from '@/components/ResizableComponent'
-import ItemListButton from '@/components/buttons/ItemListBUtton'
+import ItemListButton from '@/components/buttons/ItemListButton'
 
 import { mapState } from 'vuex'
 

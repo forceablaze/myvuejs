@@ -22,7 +22,7 @@
 <script>
 
 import { isFunction } from '@/utils'
-import ItemListButton from '@/components/buttons/ItemListBUtton'
+import ItemListButton from '@/components/buttons/ItemListButton'
 
 export default {
   name: 'toolbar-component',
