@@ -1,36 +1,28 @@
 <template>
-    
-  <div class='resizable'>
-    <div class='resizers' :style="styleObject">
-      <div class='resizer top-center'></div>
-      <slot>No content.</slot>
-    </div>
+  <div class='resizers' :style="styleObject">
+    <slot>No content.</slot>
   </div>
-
 </template>
 
 <style>
 
-.resizable .resizers, resizer{
-  position: absolute;
-  width: 100%;
+.resizers, resizer{
   box-sizing: border-box;
   bottom: 0px;
   right: 0px;
   background-color: white;
-  border-left: 2px solid #DDDDDD;
+  border-left: 4px solid #DDDDDD;
 }
 
-.resizer.top-center{
-  border-radius: 50%;
-  width: 10px;
-  height: 10px;
+.resizers::after{
+  content: " ";
+  width: 4px;
+  height: 100%;
   left: 0px;
-  top: 50%;
-  cursor: n-resize;
-  position: relative;
-  box-sizing: border-box;
-	border: 3px solid #4286f4;
+  top: 0px;
+  cursor: w-resize;
+  position: absolute;
+  background-color: transparent;
 }
 
 </style>
@@ -56,12 +48,11 @@ export default {
   computed: {
     styleObject () {
       return {
-        height: '100%',
         width: `${this.width}` + 'px'
       }
     },
     resizers () {
-      return this.$el.querySelector('.resizers')
+      return this.$el
     },
   },
 
@@ -72,6 +63,7 @@ export default {
       this.mouseX = e.pageX
       this.originHeight = this.height
       this.originWidth = this.width
+
 
       window.addEventListener('mousemove', this.resize)
       window.addEventListener('mouseup', this.stopResize)
@@ -94,16 +86,14 @@ export default {
   },
 
   mounted() {
-    const topCenterResizer = this.$el.querySelector('.resizer.top-center')
-    topCenterResizer.addEventListener('mousedown', this.mouseDown)
+    this.$el.addEventListener('mousedown', this.mouseDown)
 
     this.height = this.defaultHeight
     this.width = this.defaultWidth
   },
 
   beforeDestroy() {
-    const topCenterResizer = this.$el.querySelector('.resizer.top-center')
-    topCenterResizer.removeEventListener('mousedown', this.mouseDown)
+    this.$el.removeEventListener('mousedown', this.mouseDown)
   },
 
 }

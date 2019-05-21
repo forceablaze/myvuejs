@@ -31,6 +31,12 @@
         </v-list-tile>
       </v-list>
     </v-navigation-drawer>
+    <transition name="fadeHeight">
+      <searchresult-container
+        v-if="showSearchContainer"
+        :defaultWidth="700"/>
+    </transition>
+
     <v-toolbar color="indigo" dark fixed app>
       <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
       <v-toolbar-title>{{ toolBarTitle }}</v-toolbar-title>
@@ -54,12 +60,8 @@
       ></popup-messagebox>
       <router-view></router-view>
 
-      <transition name="fadeHeight">
-        <searchresult-container v-if="showSearchContainer"
-          :defaultWidth="300"/>
-      </transition>
-
     </v-content>
+
     <v-footer color="indigo" app>
       <span class="white--text">インテグ</span>
       <v-spacer/>
@@ -108,6 +110,8 @@ export default {
     drawer: null,
     popupMessage: '',
     taskData: {},
+    resultContainerHeight: 600,
+    resultContainerTop: 0,
   }),
   components: {
     'uploadfile-dialog': UploadFileDialog,
@@ -126,6 +130,12 @@ export default {
     toolBarMenu: state => state.toolbar.menuComponents,
 
     showSearchContainer: state => state.searchcontainer.show,
+
+    resultContainerStyle (state) {
+      return "padding-top: 64px; padding-bottlm: 32px; height: " +
+        parseInt(this.resultContainerHeight) + 'px; ' +
+        'top: ' +  this.resultContainerTop + 'px; z-index:3;'
+    }
   }),
 
   watch: {
@@ -136,12 +146,20 @@ export default {
   },
 
   mounted() {
+    window.addEventListener('scroll', this.handleScroll)
+  },
 
+  beforeDestsroy() {
+    window.removeEventListener('scroll', this.handleScroll)
   },
  
   methods: {
     filterButtonClick() {
       this.$store.dispatch('TRIGGER_SEARCH_CONTAINER')
+    },
+
+    handleScroll() {
+      //this.resultContainerTop = window.scrollY
     },
 
     upload_log() {

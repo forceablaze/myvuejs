@@ -1,6 +1,6 @@
 <template>
 
-  <resizable class="bottom-container" :defaultHeight="defaultHeight" :defaultWidth="defaultWidth">
+  <resizable class="sidebar-right" :defaultHeight="defaultHeight" :defaultWidth="defaultWidth">
     <v-layout>
       <v-flex grow  style="background-color: #DDDDDD;">
         <span style="font-size: 20px;">Search Result</span>
@@ -15,7 +15,10 @@
     </v-layout>
 
     <div class="scroll-y" style="height: 100%;">
-      <logdata-table :logs="searchResultLogs" :rowsPerPage="200" :simple="true"/>
+      <logdata-table
+        style="padding-bottom: 32px;"
+        @click="logItemClick"
+        :logs="searchResultLogs" :rowsPerPage="200" :simple="true"/>
     </div>
   </resizable>
 
@@ -23,8 +26,12 @@
 
 <style>
 
-.bottom-container {
-  background-color: white;
+.sidebar-right {
+  position: fixed;
+  margin-top: 64px;
+  padding-bottom: 32px;
+  top: 0px;
+  z-index: 3;
 }
 
 </style>
@@ -55,6 +62,10 @@ export default {
   methods: {
     pageButtonClick(idx) {
       this.fetchSearchResult(Number(idx))
+    },
+
+    logItemClick(idx) {
+      this.$eventHub.$emit('search-log-item-click', idx)
     },
 
     async fetchSearchResult(page) {

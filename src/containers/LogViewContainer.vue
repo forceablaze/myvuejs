@@ -315,6 +315,12 @@ export default {
     this.fetchLog((this.page - 1) * this.perPageCount)
   },
 
+  created() {
+    this.$eventHub.$on('search-log-item-click', (idx) => {
+      this.gotoLog(idx)
+    })
+  },
+
   components: {
     LogComponent,
     SearchDialog,

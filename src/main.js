@@ -21,6 +21,8 @@ Vue.use(Vuetify)
 const router = createRouter()
 const store = createStore()
 
+Vue.prototype.$eventHub = new Vue();
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

@@ -25,7 +25,7 @@
               <td>{{ getLogSummaryString(props.item) }}</td>
             </tr>
           </template>
-          <template v-slot:expand="props">
+          <template v-if="!simple" v-slot:expand="props">
             <log-component
               :log="props.item"
             >
@@ -113,6 +113,7 @@ export default {
 
     itemClicked(props) {
       props.expanded = !props.expanded
+      this.$emit('click', props.item.index)
     },
 
     focusTo(index) {
