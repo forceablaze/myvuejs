@@ -2,6 +2,9 @@ from django.shortcuts import render
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
+from django.http import HttpResponseNotFound
+from django.http import HttpResponse
+
 from rest_framework.generics import RetrieveAPIView, ListCreateAPIView
 from rest_framework.generics import GenericAPIView, ListAPIView
 
@@ -46,8 +49,8 @@ class PeckerTaskStatusView(RetrieveAPIView):
         try:
             peckerTask = PeckerTask.objects.get(task_id=task_id)
         except ObjectDoesNotExist:
-            content = {'message': 'No such pecker task id ({}) found.'.format(task_id)}
-            return Response(content, status=status.HTTP_200_OK)
+            print('No such task_id {} found.'.format(task_id))
+            return HttpResponseNotFound('{} task not found.'.format(task_id))
 
         serializer = self.serializer_class(peckerTask)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -69,8 +72,7 @@ class PeckerTaskCreateView(mixins.ListModelMixin, mixins.CreateModelMixin, Gener
             log_id = request.data['log_id']
         except Exception as e:
             print(e)
-            content = {'error': 'invalid data'}
-            return Response(content)
+            return HttpResponse(status = status.HTTP_406_NOT_ACCEPTABLE)
 
         r = pecker_exec.delay(log_id)
 
@@ -88,8 +90,8 @@ class CVLogRetrieveView(RetrieveAPIView):
         try:
             fileStatus = File.objects.get(id=peckerTask.log_id)
         except ObjectDoesNotExist:
-            content = {'message': 'No such log id ({}) found.'.format(peckerTask.log_id)}
-            return Response(content, status=status.HTTP_200_OK)
+            print('No such log id {} found.'.format(log_id))
+            return HttpResponseNotFound('{} log id not found.'.format(log_id))
 
         jsonFile = Path(Path(fileStatus.file.path).parent, peckerTask.output).resolve()
         print('read {}'.format(jsonFile))
@@ -109,10 +111,10 @@ class CVLogRetrieveView(RetrieveAPIView):
                 CVLOG_CACHE[peckerTask.task_id] = logObj
             except ValueError:
                 print('JSON file format error')
-                return Response({'error': 'JSON file format error.'}, status=status.HTTP_200_OK)
+                return HttpResponseNotFound('JSON file format error.')
             except FileNotFoundError:
                 print('{} not found.'.format(jsonFile))
-                return Response({'error': 'No file found.'}, status=status.HTTP_200_OK)
+                return HttpResponseNotFound('{} not found.'.format(jsonFile))
 
         print('{} {}'.format(log_from, log_from + count))
         content = {}
@@ -139,8 +141,7 @@ class CVLogRetrieveView(RetrieveAPIView):
             task_id = request.data['task_id']
         except Exception as e:
             print(e)
-            content = {'error': 'invalid data'}
-            return Response(content)
+            return HttpResponse(status = status.HTTP_406_NOT_ACCEPTABLE)
 
         log_from = 0
         count = PER_PAGE_COUNT
@@ -155,8 +156,8 @@ class CVLogRetrieveView(RetrieveAPIView):
         try:
             peckerTask = PeckerTask.objects.get(task_id=task_id)
         except ObjectDoesNotExist:
-            content = {'message': 'No such task_id id ({}) found.'.format(task_id)}
-            return Response(content, status=status.HTTP_200_OK)
+            print('No such task_id {} found.'.format(task_id))
+            return HttpResponseNotFound('{} task not found.'.format(task_id))
 
         return self.responseLogJSON(peckerTask, log_from, log_to, count)
 
@@ -166,8 +167,8 @@ class CVLogRetrieveView(RetrieveAPIView):
         try:
             peckerTask = PeckerTask.objects.get(task_id=task_id)
         except ObjectDoesNotExist:
-            content = {'message': 'No such task_id id ({}) found.'.format(task_id)}
-            return Response(content, status=status.HTTP_200_OK)
+            print('No such task_id {} found.'.format(task_id))
+            return HttpResponseNotFound('{} task not found.'.format(task_id))
 
         return self.responseLogJSON(peckerTask)
 
@@ -237,7 +238,8 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
     def showSearchResult(self, peckerTask, count, page):
 
         if not peckerTask.search:
-            return Response({'message': 'Not search task.'})
+            print('Not search task.')
+            return HttpResponse(status = status.HTTP_406_NOT_ACCEPTABLE)
 
         content = {}
         indexs = None
@@ -246,9 +248,11 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
             indexs = json.load(f)
             f.close()
         except ValueError:
-            return Response({'message': 'JSON file format error'})
+            print('JSON file format error')
+            return HttpResponse(status = status.HTTP_406_NOT_ACCEPTABLE)
         except FileNotFoundError:
-            return Response({'message': '{} not found.'.format(peckerTask.output)})
+            print('{} not found.'.format(peckerTask.output))
+            return HttpResponseNotFound('{} task out {} not found.'.format(peckerTask.output))
 
         log_from = count * (page - 1)
         log_to = log_from + count
@@ -260,7 +264,8 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
         try:
             parentPeckerTask = PeckerTask.objects.get(log_id=peckerTask.log_id, search=False)
         except ObjectDoesNotExist:
-            return Response({'message': 'Invalid task.'})
+            print('Invalid log id {}'.format(peckerTask.log_id))
+            return HttpResponse(status = status.HTTP_406_NOT_ACCEPTABLE)
 
         jsonFile = self.getLogJsonPath(parentPeckerTask)
         try:
@@ -268,9 +273,9 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
             logObj = json.load(f)
             f.close()
         except ValueError:
-            return Response({'error': 'JSON file format error.'}, status=status.HTTP_200_OK)
+            return HttpResponseNotFound('JSON file format error.')
         except FileNotFoundError:
-            return Response({'error': 'No file found.'}, status=status.HTTP_200_OK)
+            return HttpResponseNotFound('No JSON file found.')
 
         print('{} {}'.format(log_from, log_to))
         _logs = logObj['logs']
@@ -283,8 +288,9 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
         try:
             peckerTask = PeckerTask.objects.get(task_id=task_id)
         except ObjectDoesNotExist:
-            content = {'message': 'No such task_id id ({}) found.'.format(task_id)}
-            return Response(content, status=status.HTTP_200_OK)
+            print('No such task_id {} found.'.format(task_id))
+            return HttpResponseNotFound('{} task not found.'.format(task_id))
+
 
         # retrieve search result
         if 'retrieve' in request.data:
