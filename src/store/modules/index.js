@@ -3,6 +3,8 @@ import progress from './progress'
 import popupmessage from './popup-message'
 import cvlog from './cvlog'
 import searchcontainer from './search-container'
+import gotodialog from './goto-dialog'
+import searchdialog from './search-dialog'
 
 export default {
   toolbar,
@@ -10,4 +12,6 @@ export default {
   popupmessage,
   cvlog,
   searchcontainer,
+  gotodialog,
+  searchdialog,
 }

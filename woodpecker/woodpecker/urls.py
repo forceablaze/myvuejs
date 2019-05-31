@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     url('api/', include('file.urls',  namespace = 'file')),
     url('api/', include('pecker.urls',  namespace = 'pecker')),
+    url('api/', include('exporter.urls',  namespace = 'exporter')),
 ]
 
 if settings.DEBUG:

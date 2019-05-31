@@ -25,7 +25,7 @@
         <v-btn color="green darken-1" flat="flat" @click="goto">
           Goto
         </v-btn>
-        <v-btn color="green darken-1" flat="flat" @click="dialog = false">
+        <v-btn color="green darken-1" flat="flat" @click="close">
           Cancel
         </v-btn>
       </v-card-actions>
@@ -40,17 +40,23 @@ export default {
 
   data () {
     return {
-      dialog: false,
       logIndex: 0
     }
   },
+
+  computed: {
+    dialog () {
+      return this.$store.state.gotodialog.show
+    },
+  },
+
   methods: {
-    open() {
-			this.dialog = true
+    close() {
+      this.$store.dispatch('HIDE_GOTO_DIALOG')
     },
     goto() {
       console.log('goto ' + this.logIndex)
-      this.dialog = false
+      this.close()
       this.$emit('goto', this.logIndex)
     },
   }

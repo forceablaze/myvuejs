@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container>  
     <search-dialog ref="search_dialog"
       @search="searchLog"
     >
@@ -84,6 +84,96 @@ export default {
     }
   },
   methods: {
+  
+    async onExportClick(){
+      let log_id = ''
+      let outputUuid = ''
+      let ratio = 0
+
+      this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':ratio = ratio + 5 })
+      /* exportに必要なlog_idを識別するため、タスクIDをpecker moduleからgetする */
+      try{ 
+        let response = await this.axios.get('/pecker/' +  this.task_id)
+        this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':ratio = ratio + 5 })
+
+        console.log('pecker task for exporting:' + response.data.status)
+        log_id = response.data.log_id
+        outputUuid = response.data.output
+        console.log(log_id)
+      }
+      catch(error){
+        this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':false, 'ratio':0 })
+        console.log(error)
+        return
+      }
+      /* exporter moduleにexport対象のlogをtext化させる */
+      try{
+        let response = await this.axios.post('/exporter/', {'log_id':log_id, 'uuid':outputUuid})
+        this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':ratio = ratio + 5})
+
+        console.log('exporter task:' + response.data.task_id)
+        /* 辞書データのtext化タスクが完了するまでポーリング */
+        this.retrieveExportStatus(response.data.task_id,ratio)
+      }
+      catch(error){
+        this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':false, 'ratio':0})
+        console.log(error)
+        return
+      }
+    },
+
+    retrieveExportStatus(task_id,ratio) {
+      delay(3000)('retry').then((result) => {
+        /* ファイルサイズが大きくexport時間が１分２５秒を超える場合、表示更新は85で止まる */
+        if (ratio < 90){
+          ratio = ratio + 5
+        }
+
+        this.axios.get('/exporter/' +  task_id)
+        .then(response => {
+          console.log('export task status:' + response.data.status)
+          if(response.data.status == 'running') {
+            this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':ratio})
+            this.retrieveExportStatus(task_id,ratio)
+          }
+          else if(response.data.status == 'success') {
+            this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':90})
+            this.axios.post('/exporter/download',{'uuid':response.data.output})
+            .then(response => {
+              /* a tagのhrefにダウンロード属性を持たせて、
+                 リンク先のオブジェクトに受信したtext dataを設定しておく */
+              let blobObj = new Blob([response.data],{type:'text/plain'})
+              const url = URL.createObjectURL(blobObj)
+              const linkEl = document.createElement('a')
+              linkEl.href = url
+              linkEl.setAttribute('download', this.log_obj.filename+'txt')
+              document.body.appendChild(linkEl)
+              linkEl.click()
+              URL.revokeObjectURL(url)
+              linkEl.parentNode.removeChild(linkEl)
+              /* 進捗率表示を100ppc に設定後、500ms間表示し自発的に消去される */
+              this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':100})
+            })
+            .catch(error=>{
+              this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':false, 'ratio':0})           
+              console.log(error)
+            });
+          }
+          else if(response.data.status == 'failed') {
+            this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':false, 'ratio':0})           
+          }
+          else {
+            console.log('retry')
+            this.retrieveExportStatus(task_id,ratio)
+          }
+        })
+        .catch(error=>{
+          this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':false, 'ratio':0})           
+          console.log(error)
+        });
+      });
+    },
+
     handleResize() {
       console.log('size changed')
       window.scrollTo(0, document.body.scrollHeight)
@@ -91,7 +181,7 @@ export default {
 
     search() {
       console.log('open')
-      this.$refs.search_dialog.open()
+      this.$store.dispatch('SHOW_SEARCH_DIALOG')
     },
 
     gotoLog(index) {
@@ -203,7 +293,7 @@ export default {
     },
 
     onGotoClick() {
-      this.$refs.goto_log_dialog.open()
+      this.$store.dispatch('SHOW_GOTO_DIALOG')
     },
 
     fetchForwardLog() {
@@ -289,8 +379,9 @@ export default {
       })
 
       this.$store.dispatch('UPDATE_TOOLBAR_MENU', {
-        'title': this.log_obj.product + '/' + this.log_obj.serial_number,
+      'title': this.log_obj.filename,
         'menuComponents': [
+          { 'type': 'export', 'iconType': 'get_app', 'handler': this.onExportClick },
           { 'compType': 'itemlistbutton', 'title': info,
             'items': items,
             'handler': handler

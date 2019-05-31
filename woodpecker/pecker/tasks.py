@@ -170,6 +170,8 @@ def search_log_exec(self, log_id, jsonFile, apitype, log_format, text,
     indexs = [ log['index'] for log in _logs ]
     print('found {} logs'.format(len(indexs)))
 
+    logObj = None
+
     output = Path(settings.MEDIA_ROOT, searchTask.output).resolve()
 
     with open(output, 'w') as file:

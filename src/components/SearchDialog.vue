@@ -100,7 +100,7 @@
         <v-btn color="green darken-1" flat="flat" @click="search">
           Search
         </v-btn>
-        <v-btn color="green darken-1" flat="flat" @click="dialog = false">
+        <v-btn color="green darken-1" flat="flat" @click="close">
           Cancel
         </v-btn>
       </v-card-actions>
@@ -118,7 +118,6 @@ export default {
 
   data () {
     return {
-      dialog: false,
       advanceSearch: false,
       showApitypeInput: '',
       dataAreaLabel: 'text',
@@ -178,6 +177,10 @@ export default {
     }
   },
   computed: {
+    dialog () {
+      return this.$store.state.searchdialog.show
+    },
+
     dataAreaHolder () {
       if(this.dataAreaModel == 0)
         return 'Please input string. e.g., ShowMessage'
@@ -187,8 +190,8 @@ export default {
   },
 
   methods: {
-    open() {
-			this.dialog = true
+    close() {
+      this.$store.dispatch('HIDE_SEARCH_DIALOG')
     },
     search() {
       let data = {}
@@ -227,7 +230,7 @@ export default {
         data.formatted_texts = this.formattedTextModel
       }
 
-      this.dialog = false
+      this.$store.dispatch('HIDE_SEARCH_DIALOG')
       this.$emit('search', data)
     },
 

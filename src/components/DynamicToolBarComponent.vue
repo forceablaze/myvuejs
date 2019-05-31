@@ -8,13 +8,25 @@
     :title="title"
     :items="items"
     @click="clickHandler"
+    :disabled="processing"
+    :export="showProgress"
     >
     <template v-if="text">
       <div>{{ text }}</div>
     </template>
-    <v-icon v-if="showIcon">
+    <v-icon v-if="showIcon || !showProgress">
       {{ iconType }}
     </v-icon>
+
+    <v-progress-circular v-if="showProgress"
+      :rotate="90"
+      :size="35"
+      :width="3"
+      :value="ratio"
+      color="orange"
+    >
+      {{ ratio }}
+    </v-progress-circular>
   </component>
 
 </template>
@@ -28,7 +40,6 @@ export default {
   name: 'toolbar-component',
 
   data: () => ({
-    componentType: 'v-btn',
   }),
 
   props: {
@@ -48,6 +59,25 @@ export default {
       if(this.type == "icon")
         return true
       return false
+    },
+  /** 
+   * get_app && processing -> progress 
+   * !get_app && processing -> showicon 
+   * get_app && !processing -> showicon 
+   * !get_app && !processing -> showicon 
+  */
+    'showProgress' () {
+      if(this.$store.state.toolbar.processing && this.iconType == "get_app")
+        return true
+      return false
+    },
+
+    processing () {
+      return this.$store.state.toolbar.processing
+    },
+
+    ratio () {
+      return this.$store.state.toolbar.ratio
     },
 
     compType () {

@@ -15,6 +15,11 @@ from corsheaders.defaults import default_headers
 from pathlib import Path
 
 from cvlog.symbol import SymbolTable
+import woodpecker
+import cvlog
+
+print('woodpecker version: {}'.format(woodpecker.__version__))
+print('cvlog module version: {}'.format(cvlog.__version__))
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,7 +35,7 @@ SYMBOL_TABLE = SymbolTable.loadSymbolTable(SYMBOL_TABLE_PATH)
 SECRET_KEY = 'soy4w9e+4k*!#f0q^&x42(+f76jsu5mk)g5x+xl8#5=^$a_j_^'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -67,6 +72,7 @@ INSTALLED_APPS = [
     'file',
     'pecker',
     'tests',
+    'exporter',
 ]
 
 MIDDLEWARE = [
