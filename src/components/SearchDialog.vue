@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="dialog" max-width="800">
+  <v-dialog v-model="dialog" persistent max-width="800">
     <v-card>
       <v-card-title>
         <span class="headline">Search/Filter</span>

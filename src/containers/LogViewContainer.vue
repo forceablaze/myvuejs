@@ -48,6 +48,7 @@ export default {
   data() {
     return {
       highlight: [],
+      highLightIndex:-1,
       focus: undefined,
       perPageCount: 500,
       showAll: false,
@@ -84,45 +85,58 @@ export default {
     }
   },
   methods: {
+
+    updateExportProgress(ratio) {
+      this.$store.dispatch('UPDATE_EXPORT_PROGRESS',
+        {
+          'processing': true,
+          'ratio': ratio
+        })
+    },
   
     async onExportClick(){
-      let log_id = ''
-      let outputUuid = ''
-      let ratio = 0
+      let log_id = undefined
+      let logOutputUUID = undefined
 
-      this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':ratio = ratio + 5 })
+      this.updateExportProgress(5)
+
       /* exportに必要なlog_idを識別するため、タスクIDをpecker moduleからgetする */
-      try{ 
+      try { 
         let response = await this.axios.get('/pecker/' +  this.task_id)
-        this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':ratio = ratio + 5 })
+
+        this.updateExportProgress(10)
 
         console.log('pecker task for exporting:' + response.data.status)
+
         log_id = response.data.log_id
-        outputUuid = response.data.output
+        logOutputUUID = response.data.output
         console.log(log_id)
       }
       catch(error){
-        this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':false, 'ratio':0 })
+        this.$store.dispatch('UPDATE_EXPORT_PROGRESS', { 'processing': false, 'ratio': 0 })
         console.log(error)
         return
       }
       /* exporter moduleにexport対象のlogをtext化させる */
       try{
-        let response = await this.axios.post('/exporter/', {'log_id':log_id, 'uuid':outputUuid})
-        this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':ratio = ratio + 5})
+        let response = await this.axios.post('/exporter/',
+          { 'log_id': log_id,
+            'uuid': logOutputUUID
+          })
+        this.updateExportProgress(15)
 
         console.log('exporter task:' + response.data.task_id)
         /* 辞書データのtext化タスクが完了するまでポーリング */
-        this.retrieveExportStatus(response.data.task_id,ratio)
+        this.retrieveExportStatus(response.data.task_id, 15)
       }
       catch(error){
-        this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':false, 'ratio':0})
+        this.$store.dispatch('UPDATE_EXPORT_PROGRESS', { 'processing': false, 'ratio': 0 })
         console.log(error)
         return
       }
     },
 
-    retrieveExportStatus(task_id,ratio) {
+    retrieveExportStatus(task_id, ratio) {
       delay(3000)('retry').then((result) => {
         /* ファイルサイズが大きくexport時間が１分２５秒を超える場合、表示更新は85で止まる */
         if (ratio < 90){
@@ -134,30 +148,21 @@ export default {
           console.log('export task status:' + response.data.status)
           if(response.data.status == 'running') {
             this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':ratio})
-            this.retrieveExportStatus(task_id,ratio)
+            this.retrieveExportStatus(task_id, ratio)
           }
           else if(response.data.status == 'success') {
-            this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':90})
-            this.axios.post('/exporter/download',{'uuid':response.data.output})
-            .then(response => {
-              /* a tagのhrefにダウンロード属性を持たせて、
-                 リンク先のオブジェクトに受信したtext dataを設定しておく */
-              let blobObj = new Blob([response.data],{type:'text/plain'})
-              const url = URL.createObjectURL(blobObj)
-              const linkEl = document.createElement('a')
-              linkEl.href = url
-              linkEl.setAttribute('download', this.log_obj.filename+'txt')
-              document.body.appendChild(linkEl)
-              linkEl.click()
-              URL.revokeObjectURL(url)
-              linkEl.parentNode.removeChild(linkEl)
-              /* 進捗率表示を100ppc に設定後、500ms間表示し自発的に消去される */
-              this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':true, 'ratio':100})
-            })
-            .catch(error=>{
-              this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':false, 'ratio':0})           
-              console.log(error)
-            });
+            this.updateExportProgress(90)
+
+            const linkEl = document.createElement('a')
+            linkEl.href = this.axios.defaults.baseURL + '/exporter/download/' + response.data.output
+            console.log(this.log_obj.filename)
+            linkEl.download = this.log_obj.filename + 'txt'
+            document.body.appendChild(linkEl)
+            linkEl.click()
+            linkEl.parentNode.removeChild(linkEl)
+
+            this.updateExportProgress(100)
+
           }
           else if(response.data.status == 'failed') {
             this.$store.dispatch('UPDATE_EXPORT_PROGRESS', {'processing':false, 'ratio':0})           
@@ -185,16 +190,30 @@ export default {
     },
 
     gotoLog(index) {
-      let p = Math.floor(index / this.perPageCount)
-      let firstInPage = p * this.perPageCount
 
-      this.fetchLog(firstInPage, () => {
+      let gotoPage = Math.floor(index / this.perPageCount) + 1
 
+      /** fetch logs in case page turning occurs */
+      if ( gotoPage != this.page )
+      {
+        this.highLightIndex = Number(index)
+
+        console.log('goto page:' + gotoPage)
+        this.$router.push({ name: 'log_view',
+          params: {
+            task_id: this.task_id,
+          page: gotoPage
+        }})
+      }
+      else
+      {
+        /** set highlight here because fetch method doesn't work, */
+        /** when there is no page turning.                        */
         this.highlight = [...this.logs.values()].map((log, idx) => {
           return log.index == Number(index)
         })
-        this.focus = Number(index)
-      })
+      } 
+      this.focus = Number(index)
     },
 
     showPopupMessageBox(message) {
@@ -302,12 +321,14 @@ export default {
       let nextPage = parseInt(this.page) + 1
       if(nextPage > this.log_obj.total_pages)
         return
-
+      
       this.$router.push({ name: 'log_view',
         params: {
           task_id: this.task_id,
           page: nextPage
         }})
+      /* let the focus move to the first line, when turning pages*/
+      this.focus = Number((nextPage-1)*this.perPageCount)  
     },
 
     fetchBackLog() {
@@ -316,18 +337,18 @@ export default {
       let prevPage = parseInt(this.page) - 1
       if(prevPage <= 0)
         return
-
+            
       this.$router.push({ name: 'log_view',
         params: {
           task_id: this.task_id,
-          page: parseInt(this.page) - 1
+          page: prevPage
         }})
+      /* let the focus move to the first line, when turning pages*/
+      this.focus = Number((prevPage-1)*this.perPageCount)  
     },
 
     fetchLog(from, doneHandler = () => {} ) {
       console.log('fetch log ' + from)
-      this.highlight = []
-      this.focus = undefined
 
       this.$store.dispatch('SHOW_PROCESS_PROGRESS', {
         'title': 'Loading...'
@@ -348,8 +369,17 @@ export default {
 
         doneHandler()
 
+        /* set highlight if given a index to highlight by gotolog method */
+        if( this.highLightIndex > -1 )
+        {
+          this.highlight = [...this.logs.values()].map((log, idx) => {
+            return log.index == Number(this.highLightIndex)
+          })
+        }
+
         let page = (from / this.perPageCount) + 1
         let pageInfo = 'page: ' + page + '/' + this.log_obj.total_pages
+        
         this.updateToolBar(pageInfo, (idx) => {
         console.log(idx)
 

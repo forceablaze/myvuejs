@@ -6,7 +6,6 @@
           :expand="true"
           item-key="index"
           loading="true"
-          hide-headers
           :rows-per-page-items="rowsPerPageItems"
           :pagination.sync="pagination"
         >

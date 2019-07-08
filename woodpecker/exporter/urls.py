@@ -8,5 +8,5 @@ urlpatterns = [
     #url(r'^exporter/$', ExpoterTaskCreateView.as_view()),
     path('exporter/', ExpoterTaskCreateView.as_view()),
     path('exporter/<uuid:task_id>', ExpoterTaskStatusView.as_view()),
-    path('exporter/download', ExpoterFileView.as_view()),
+    path('exporter/download/<uuid:uuid>', ExpoterFileView.as_view()),
 ]

@@ -1,8 +1,10 @@
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
+from django.http import StreamingHttpResponse
 from django.http import HttpResponseNotFound
 from django.http import HttpResponse
+from wsgiref.util import FileWrapper
 
 from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.renderers import JSONRenderer
@@ -13,9 +15,11 @@ from rest_framework import status
 from .models import ExporterTask
 from .serializers import ExporterTaskSerializer
 
-from .tasks import exporter_exec
 from pathlib import Path
 import json, uuid, io, os
+
+from .tasks import exporter_exec
+from file.models import File
 
 # Create your views here.
 class ExpoterTaskStatusView(RetrieveAPIView):
@@ -48,34 +52,35 @@ class ExpoterTaskCreateView(GenericAPIView):
             print(e)
             return HttpResponse(status = status.HTTP_406_NOT_ACCEPTABLE)
 
-        r = exporter_exec.delay(log_id,uuid)
+        r = exporter_exec.delay(log_id, uuid)
 
         return Response({'task_id': r.id})
 
 class ExpoterFileView(GenericAPIView):
     permission_classes = (AllowAny, )
 
-    def post(self, request, *args, **kwargs):
-        try:
-            uuid   = request.data['uuid']
-        except Exception as e:
-            print(e)
-            return HttpResponse(status = status.HTTP_406_NOT_ACCEPTABLE)
+    def get(self, request, uuid, *args, **kwargs):
 
-        downloadPath = Path(settings.MEDIA_ROOT, uuid + '.txt').resolve()
-        print('{} export file name'.format(downloadPath))
+        chunk_size = 8192
+        downloadPath = Path(settings.MEDIA_ROOT, str(uuid)).resolve()
 
-        fileObj = None
+        response = StreamingHttpResponse(
+            FileWrapper(open(downloadPath, 'rb'), chunk_size),
+            content_type="text/plain")
+
+
+        exporterTask = ExporterTask.objects.get(output = str(uuid))
+
+        fileStatus = None
         try:
-            f = open(downloadPath, 'r')
-            fileObj = f.read()
-            f.close()
-        except ValueError:
-            print('text file format error')
-            return HttpResponse(status = status.HTTP_406_NOT_ACCEPTABLE)
-        except FileNotFoundError:
-            message = '{} not found.'.format(downloadPath)
-            print(message)
-            return HttpResponseNotFound(message)
-        
-        return Response(fileObj)
+            fileStatus = File.objects.get(id=exporterTask.log_id)
+        except ObjectDoesNotExist:
+            return
+        logName = Path(fileStatus.file.path).name
+
+        print('get the export result of {}'.format(logName))
+
+        response['Content-Length'] = os.path.getsize(downloadPath)
+        response['Content-Disposition'] = "attachment; filename={}".format(logName + '.txt')
+
+        return response

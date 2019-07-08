@@ -14,27 +14,25 @@ from exporter.models import ExporterTaskStatus, ExporterTaskStatusToString
 from file.models import File
 
 @shared_task(bind=True)
-def exporter_exec(self, log_id = None, uuid = None):
-    if log_id is None:
-        return
-    if uuid is None:
-        return
+def exporter_exec(self, log_id, logOutputUUID):
+
     fileStatus = None
     try:
         fileStatus = File.objects.get(id=log_id)
     except ObjectDoesNotExist:
         return
-    
-    targetPath = Path(Path(fileStatus.file.path).parent, uuid).resolve()
-    print('{} export target'.format(targetPath))
+
+    targetPath = Path(Path(fileStatus.file.path).parent, logOutputUUID).resolve()
     
     # task id
     taskUUIDStr = exporter_exec.request.id
     exporterTask = ExporterTask(task_id = taskUUIDStr,
         status = ExporterTaskStatusToString(ExporterTaskStatus.CREATED),
         log_id = log_id,
-        output = uuid)
+        output = str(uuid.uuid4()))
     exporterTask.save()
+
+    print('{} export target to {}'.format(targetPath, exporterTask.output))
     
     exporterTask.status = ExporterTaskStatusToString(ExporterTaskStatus.RUNNING)
     exporterTask.save()
@@ -62,7 +60,7 @@ def exporter_exec(self, log_id = None, uuid = None):
             value.get('formatted_text'), value.get('binary_text')
             ))
 
-    textFilePath = Path(settings.MEDIA_ROOT, exporterTask.output + '.txt').resolve()
+    textFilePath = Path(settings.MEDIA_ROOT, exporterTask.output).resolve()
     try:
         f = open(textFilePath, 'w')
         f.write(txtbuff.getvalue())

@@ -12,9 +12,6 @@ import LogList from '@/components/LogList'
 import LogViewContainer from '@/containers/LogViewContainer'
 import LogComponent from '@/components/LogComponent'
 
-import Http404 from '@/components/errors/Http404'
-import Http406 from '@/components/errors/Http406'
-
 let About = {
   template: '<h2>About</h2>'
 }
@@ -39,9 +36,6 @@ let createRouter = () => {
       ]
     },
     { path: '/about', name: 'about', component: About },
-    { path: '/404', component: Http404 },
-    { path: '/406', component: Http406 },
-    { path: '*', redirect: '/404' },
   ]
 
   const router = new Router({

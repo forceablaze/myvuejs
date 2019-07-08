@@ -48,7 +48,9 @@
         :handler="menu.handler">
       </toolbar-component>
     </v-toolbar>
-    <v-content style="height:100%;">
+    <multitoolbar />
+
+    <v-content :style="contentStyle">
 			<uploadfile-dialog ref="upload_dialog"
         @uploading="onUploading"
         @success="onUploadSuccess"
@@ -98,6 +100,8 @@ import UploadFileDialog from '@/components/UploadFileDialog'
 import ProcessProgress from '@/components/ProcessProgress'
 import DynamicToolBarComponent from '@/components/DynamicToolBarComponent'
 
+import MultiFunctionToolBar from '@/components/MultiFunctionToolBar'
+
 import SearchResultContainer from '@/containers/SearchResultContainer'
 
 import { delay } from '@/utils'
@@ -110,8 +114,6 @@ export default {
     drawer: null,
     popupMessage: '',
     taskData: {},
-    resultContainerHeight: 600,
-    resultContainerTop: 0,
   }),
   components: {
     'uploadfile-dialog': UploadFileDialog,
@@ -119,6 +121,7 @@ export default {
     'toolbar-component': DynamicToolBarComponent,
     'popup-messagebox': PopupMessageBox,
     'searchresult-container': SearchResultContainer,
+    'multitoolbar': MultiFunctionToolBar,
   },
   props: {
     source: String,
@@ -131,11 +134,12 @@ export default {
 
     showSearchContainer: state => state.searchcontainer.show,
 
-    resultContainerStyle (state) {
-      return "padding-top: 64px; padding-bottlm: 32px; height: " +
-        parseInt(this.resultContainerHeight) + 'px; ' +
-        'top: ' +  this.resultContainerTop + 'px; z-index:3;'
-    }
+    contentStyle(state) {
+      return {
+        height: '100%',
+        paddingTop: '128px',
+      }
+    },
   }),
 
   watch: {
@@ -156,10 +160,6 @@ export default {
   methods: {
     filterButtonClick() {
       this.$store.dispatch('TRIGGER_SEARCH_CONTAINER')
-    },
-
-    handleScroll() {
-      //this.resultContainerTop = window.scrollY
     },
 
     upload_log() {
