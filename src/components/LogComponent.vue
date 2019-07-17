@@ -1,6 +1,6 @@
 <template>
 
-    <v-layout row>
+    <v-layout row class="logcomp">
       <v-layout column>
         <v-flex d-flex sm2>
           <v-layout row>
@@ -74,7 +74,9 @@
 
       <v-flex d-flex style="max-width: 80px;">
         <v-layout row wrap>
-          <v-flex>
+          <v-flex
+              style="background-color: #DDFFFF;"
+          >
             <v-card
               style="background-color: #DDFFFF;"
             >
@@ -92,9 +94,8 @@
             >
               <v-card-text style="max-width: 100%; word-wrap: break-word;">{{ '0x' + log.position }}</v-card-text>
             </v-card>
-            <v-switch
+            <v-switch class='raw-switch'
               v-model="showRaw"
-              style="background-color: #EEEEEE; height: 32px;"
             >
             </v-switch>
           </v-flex>
@@ -105,31 +106,33 @@
 
 </template>
 
-<style scoped>
-.v-label {
-  font-size: 12px;
+<style>
+
+.logcomp .raw-switch {
+  align-items: center;
+  height: 32px;
+  background-color: #DDFFFF;
 }
 
-.v-card__text {
-  padding: 0px;
+.logcomp .raw-switch .v-input__slot {
+  margin-bottom: 0px;
 }
 
-.v-input__slot {
-  margin: auto;
+.logcomp .raw-switch .v-input__control .v-input--selection-controls:not(.v-input--hide-details) .v-input__slot {
+  margin-bottom: 0px;
 }
 
-.v-messages {
+.logcomp .raw-switch .v-messages {
   min-height: 0px;
   min-width: 0px;
 }
 
-.v-input--selection-controls {
-  margin: auto;
-  padding-top: 0px;
+.logcomp .v-label {
+  font-size: 12px;
 }
 
-.v-input--selection-controls:not(.v-input--hide-details) .v-input__slot {
-  margin-bottom: 0px;
+.logcomp .v-card__text {
+  padding: 0px;
 }
 
 </style>

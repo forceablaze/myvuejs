@@ -1,5 +1,6 @@
 <template>
         <v-data-table
+          class="logtable"
           ref="table"
           :headers="headers"
           :items="logs"
@@ -16,7 +17,7 @@
             >
               <td>{{ props.item.index }}</td>
               <td v-if="!simple">{{ props.item.time }}</td>
-              <td v-if="checkAPIType(props.item.apitype)">{{ props.item.apitype }}</td>
+              <td v-if="checkAPITypeIsNotNumber(props.item.apitype)">{{ props.item.apitype }}</td>
               <td v-else>{{ 'PF ' + props.item.own_domain + '/' + props.item.own_subsys  }}</td>
               <td v-if="!simple">{{ props.item.flag }}</td>
               <td v-if="!simple">{{ props.item.direction }}</td>
@@ -31,13 +32,18 @@
            </log-component>
           </template>
         </v-data-table>
-
 </template>
 
 <style>
-table.v-table tbody td, table.v-table tbody th {
+
+.logtable table.v-table tbody td, table.v-table tbody th {
   height: auto;
 }
+
+.logtable table.v-table thead tr {
+  height: auto;
+}
+
 </style>
 
 <script>
@@ -48,21 +54,12 @@ export default {
   name: 'logdata-table',
   data() {
     return  {
-      headers: [
-        { text: 'index', value: 'index'},
-        { text: 'time', value: 'time' },
-        { text: 'apitype', value: 'apitype' },
-        { text: 'flag', value: 'flag' },
-        { text: 'direction', value: 'direction' },
-        { text: 'logid', value: 'logid' },
-        { text: 'data', value: 'data' },
-      ],
-
       rowsPerPageItems: [{text: 'All', value: -1}],
       pagination: { rowsPerPage: this.rowsPerPage }
     }
   },
   props: {
+    headers: Array,
     rowsPerPage: Number,
     logs: Array,
     focus: Number,
@@ -106,7 +103,7 @@ export default {
       }
     },
 
-    checkAPIType(apitype) {
+    checkAPITypeIsNotNumber(apitype) {
       return isNaN(Number(apitype))
     },
 

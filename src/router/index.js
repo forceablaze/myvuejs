@@ -12,6 +12,8 @@ import LogList from '@/components/LogList'
 import LogViewContainer from '@/containers/LogViewContainer'
 import LogComponent from '@/components/LogComponent'
 
+import VirtualScroller from '@/components/VirtualScroller'
+
 let About = {
   template: '<h2>About</h2>'
 }
@@ -35,7 +37,7 @@ let createRouter = () => {
         },
       ]
     },
-    { path: '/about', name: 'about', component: About },
+    { path: '/about', name: 'about', component: VirtualScroller },
   ]
 
   const router = new Router({

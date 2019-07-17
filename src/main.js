@@ -6,9 +6,11 @@ import 'vuetify/dist/vuetify.min.css'
 
 import axios from 'axios'
 import VueAxios from 'vue-axios'
-
 import { axiosConfig } from '@/config'
-Vue.use(VueAxios, axios.create(axiosConfig))
+
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+import VueVirtualScroller from 'vue-virtual-scroller'
+
 
 import App from './App'
 import { createStore } from '@/store/index'
@@ -17,6 +19,9 @@ import { createRouter } from './router'
 Vue.config.productionTip = false
 
 Vue.use(Vuetify)
+Vue.use(VueAxios, axios.create(axiosConfig))
+Vue.use(VueVirtualScroller)
+
 
 const router = createRouter()
 const store = createStore()

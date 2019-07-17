@@ -18,6 +18,7 @@
       <logdata-table
         style="padding-bottom: 32px;"
         @click="logItemClick"
+        :headers="tableHeaders"
         :logs="searchResultLogs" :rowsPerPage="200" :simple="true"/>
     </div>
   </resizable>
@@ -28,7 +29,7 @@
 
 .sidebar-right {
   position: fixed;
-  margin-top: 64px;
+  margin-top: 128px;
   padding-bottom: 32px;
   top: 0px;
   z-index: 3;
@@ -53,7 +54,12 @@ export default {
     return {
       fontSize: '14',
       buttonHeight: '20',
-      perPageCount: 500
+      perPageCount: 500,
+      tableHeaders: [
+        { text: 'index', value: 'index'},
+        { text: 'apitype', value: 'apitype' },
+        { text: 'data', value: 'data' },
+      ],
     }
   },
 

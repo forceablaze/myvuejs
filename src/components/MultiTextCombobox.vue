@@ -6,7 +6,7 @@
       :items="items"
       :search-input.sync="search"
       hide-selected
-      label="Search for an option"
+      label="Free text searching"
       multiple
       small-chips
       solo
@@ -75,7 +75,22 @@
     </v-combobox>
 </template>
 
+<style>
+.v-text-field.v-text-field--solo .v-input__control {
+    min-height: 0px;
+    padding: 0;
+}
+
+.v-text-field.v-text-field--solo:not(.v-text-field--solo-flat) > .v-input__control > .v-input__slot {
+    box-shadow: 0 0 0 0;
+}
+
+</style>
+
+
+
 <script>
+
 
 export default {
   name: 'multitext-combobox',
@@ -97,7 +112,11 @@ export default {
       ],
       x: 0,
       search: null,
-      y: 0
+      y: 0,
+
+      styleObject: {
+        boxShadow: "0 0 0 0"
+      }
     }
   },
 

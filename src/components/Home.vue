@@ -12,6 +12,16 @@
   </v-container>
 </template>
 
+<style scoped>
+
+.container {
+  max-width: 100%;
+  padding:0px;
+}
+
+</style>
+
+
 <script>
 
 export default {

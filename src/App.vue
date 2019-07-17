@@ -48,7 +48,6 @@
         :handler="menu.handler">
       </toolbar-component>
     </v-toolbar>
-    <multitoolbar />
 
     <v-content :style="contentStyle">
 			<uploadfile-dialog ref="upload_dialog"
@@ -63,34 +62,10 @@
       <router-view></router-view>
 
     </v-content>
-
-    <v-footer color="indigo" app>
-      <span class="white--text">インテグ</span>
-      <v-spacer/>
-      <v-btn flat icon @click.stop="filterButtonClick">
-        <v-icon color="white">filter_list</v-icon>
-      </v-btn>
-    </v-footer>
   </v-app>
 </template>
 
 <style>
-
-.container {
-  max-width: 100%;
-  padding: 0px;
-}
-
-.fadeHeight-enter-active,
-.fadeHeight-leave-active {
-  transition: all 0.2s;
-}
-.fadeHeight-enter,
-.fadeHeight-leave-to
-{
-  opacity: 0;
-  height: 0px
-}
 </style>
 
 <script>
@@ -137,7 +112,7 @@ export default {
     contentStyle(state) {
       return {
         height: '100%',
-        paddingTop: '128px',
+        paddingTop: '64px',
       }
     },
   }),
@@ -151,10 +126,14 @@ export default {
 
   mounted() {
     window.addEventListener('scroll', this.handleScroll)
+    window.addEventListener('keypress', this.keyPress);
+    window.addEventListener('keydown', this.keyDown);
   },
 
   beforeDestsroy() {
     window.removeEventListener('scroll', this.handleScroll)
+    window.removeEventListener('keypress', this.keyPress)
+    window.removeEventListener('keydown', this.keyDown)
   },
  
   methods: {
@@ -267,6 +246,19 @@ export default {
 
     navigatePage(pageName) {
       this.$router.push({ name: pageName })
+    },
+
+    keyPress(e) {
+      console.log(e)
+      console.log(String.fromCharCode(e.keyCode));
+    },
+
+    keyDown(e) {
+      console.log(e)
+    },
+
+    focusToolBar() {
+      console.log('toolbar')
     }
   },
 }

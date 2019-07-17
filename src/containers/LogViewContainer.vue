@@ -1,37 +1,28 @@
 <template>
-  <v-container>  
-    <search-dialog ref="search_dialog"
-      @search="searchLog"
-    >
-    </search-dialog>
+  <v-container>
 
-    <goto-log-dialog ref="goto_log_dialog"
-      @goto="gotoLog"
-    >
-    </goto-log-dialog>
+    <goto-log-dialog @goto="gotoLog"/>
 
-    <v-container
-      class="scroll-y"
-    >
+    <multitoolbar @search="searchLog"/>
+
       <logdata-table
+        :style="tableStyleObject"
+        :headers="tableHeaders"
         :logs="logs"
         :rowsPerPage="perPageCount"
         :highlight="highlight"
         :focus="focus"
       />
-    </v-container>
   </v-container>
 </template>
 
-<style>
+<style scoped>
+
 .container {
   max-width: 100%;
   padding:0px;
 }
 
-table.v-table tbody td, table.v-table tbody th {
-  height: auto;
-}
 </style>
 
 <script>
@@ -42,6 +33,8 @@ import GotoLogDialog from '@/components/GotoLogDialog'
 
 import LogDataTable from '@/components/LogDataTable'
 
+import MultiFunctionToolBar from '@/components/MultiFunctionToolBar'
+
 import { delay } from '@/utils'
 
 export default {
@@ -51,8 +44,10 @@ export default {
       highLightIndex:-1,
       focus: undefined,
       perPageCount: 500,
-      showAll: false,
-      headers: [
+      tableStyleObject: {
+        paddingTop: "64px",
+      },
+      tableHeaders: [
         { text: 'index', value: 'index'},
         { text: 'time', value: 'time' },
         { text: 'apitype', value: 'apitype' },
@@ -177,11 +172,6 @@ export default {
           console.log(error)
         });
       });
-    },
-
-    handleResize() {
-      console.log('size changed')
-      window.scrollTo(0, document.body.scrollHeight)
     },
 
     search() {
@@ -381,12 +371,12 @@ export default {
         let pageInfo = 'page: ' + page + '/' + this.log_obj.total_pages
         
         this.updateToolBar(pageInfo, (idx) => {
-        console.log(idx)
+          console.log(idx)
 
-        this.$router.push({ name: 'log_view',
-          params: {
-            task_id: this.task_id,
-            page: idx
+          this.$router.push({ name: 'log_view',
+            params: {
+              task_id: this.task_id,
+              page: idx
           }})
         })
 
@@ -417,7 +407,6 @@ export default {
             'handler': handler
           },
           { 'type': 'flat', 'text': 'GOTO', 'handler': this.onGotoClick },
-          { 'type': 'icon', 'iconType': 'search', 'handler': this.search },
           { 'type': 'icon', 'iconType': 'arrow_back_ios', 'handler': this.fetchBackLog },
           { 'type': 'icon', 'iconType': 'arrow_forward_ios', 'handler': this.fetchForwardLog },
         ]})
@@ -447,6 +436,7 @@ export default {
     SearchDialog,
     GotoLogDialog,
     'logdata-table': LogDataTable,
+    'multitoolbar': MultiFunctionToolBar,
   }
 }
 
