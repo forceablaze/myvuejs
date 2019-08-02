@@ -1,26 +1,33 @@
 <template>
 
-  <resizable class="sidebar-right" :defaultHeight="defaultHeight" :defaultWidth="defaultWidth">
-    <v-layout>
-      <v-flex grow  style="background-color: #DDDDDD;">
-        <span style="font-size: 20px;">Search Result</span>
-      </v-flex>
-      <v-flex shrink style="background-color: #DDDDDD;">
-        <itemlistbutton
-          :fontSize="fontSize"
-          :height="buttonHeight"
-          @click="pageButtonClick"
-          v-if="showResultPageButton" :title="searchPageInfo" :items="pageButtonItems"/>
-      </v-flex>
-    </v-layout>
+  <resizable class="sidebar-right"
+    horizontal
+    left
+    :defaultWidth="defaultWidth"
+    :defaultHeight="viewHeight"
+    @resize="resize">
+    <v-layout column style="padding-left: 4px;">
+      <v-layout row>
+        <v-flex grow  style="background-color: #DDDDDD;">
+          <span style="font-size: 20px;">Search Result</span>
+        </v-flex>
+        <v-flex shrink style="background-color: #DDDDDD;">
+          <itemlistbutton
+            :fontSize="fontSize"
+            :height="buttonHeight"
+            @click="pageButtonClick"
+            v-if="showResultPageButton" :title="searchPageInfo" :items="pageButtonItems"/>
+        </v-flex>
+      </v-layout>
 
-    <div class="scroll-y" style="height: 100%;">
-      <logdata-table
-        style="padding-bottom: 32px;"
-        @click="logItemClick"
-        :headers="tableHeaders"
-        :logs="searchResultLogs" :rowsPerPage="200" :simple="true"/>
-    </div>
+      <div style="height: 100%;">
+        <logdata-table
+          style="padding-bottom: 32px;"
+          @click="logItemClick"
+          :headers="tableHeaders"
+          :logs="searchResultLogs" :rowsPerPage="200" :simple="true"/>
+      </div>
+    </v-layout>
   </resizable>
 
 </template>
@@ -31,6 +38,11 @@
   position: fixed;
   margin-top: 128px;
   padding-bottom: 32px;
+
+  bottom: 0px;
+  right: 0px;
+
+  border-bottom: 4px solid #DDDDDD;
   top: 0px;
   z-index: 3;
 }
@@ -44,7 +56,30 @@ import LogDataTable from '@/components/LogDataTable'
 import ResizableComponent from '@/components/ResizableComponent'
 import ItemListButton from '@/components/buttons/ItemListButton'
 
-import { mapState } from 'vuex'
+import DataTable from '@/components/DataTable'
+const SmallDataTable = {
+  extends: DataTable,
+
+  computed: {
+    dataTableHeight() {
+      return this.$wood.logViewContainer.windowHeight -
+        this.$wood.logViewContainer.bottomViewHeight -
+        160
+    },
+    dataTableWidth() {
+      return this.$wood.logViewContainer.rightViewWidth
+    }
+  }
+}
+
+const MainLogDataTable = {
+  extends:  LogDataTable,
+
+  components: {
+    'datatable': SmallDataTable,
+  }
+}
+
 
 export default {
 
@@ -63,7 +98,7 @@ export default {
     }
   },
 
-  props: ['defaultHeight', 'defaultWidth'],
+  props: ['defaultWidth'],
 
   methods: {
     pageButtonClick(idx) {
@@ -71,7 +106,8 @@ export default {
     },
 
     logItemClick(idx) {
-      this.$eventHub.$emit('search-log-item-click', idx)
+      this.$eventHub.$emit('search-log-item-click',
+        this.searchResultLogs[idx].index)
     },
 
     async fetchSearchResult(page) {
@@ -98,41 +134,65 @@ export default {
       }
 
       this.$store.dispatch('HIDE_PROCESS_PROGRESS')
+    },
+
+    resize(dim) {
+      this.$wood.logViewContainer.rightViewWidth = dim.width
     }
   },
 
-  computed: mapState({
+  computed: {
 
-    task_id: state => state.cvlog.search_task_id,
+    task_id() {
+      return this.$store.state.cvlog.search_task_id
+    },
 
-    searchResultLogs: state => state.cvlog.search_log_obj.logs,
+    searchResultLogs() {
+      return this.$store.state.cvlog.search_log_obj.logs
+    },
 
-    pageButtonItems: state => {
-      if(state.cvlog.search_log_obj === undefined)
+    pageButtonItems() {
+      if(this.$store.state.cvlog.search_log_obj === undefined)
         return []
 
-      let totalPages = state.cvlog.search_log_obj.total_pages
+      let totalPages = this.$store.state.cvlog.search_log_obj.total_pages
       return [...Array(totalPages).keys()].map((idx) => {
         return {'title': String(idx + 1) }
       })
     },
 
-    showResultPageButton: state => {
-      return Object.keys(state.cvlog.search_log_obj).length !== 0
+    showResultPageButton() {
+      return Object.keys(this.$store.state.cvlog.search_log_obj).length !== 0
     },
 
-    searchPageInfo: state => {
-      if(Object.keys(state.cvlog.search_log_obj).length === 0)
+    searchPageInfo() {
+      if(Object.keys(this.$store.state.cvlog.search_log_obj).length === 0)
         return ''
-      let page = state.cvlog.search_log_obj.page
-      let total_pages = state.cvlog.search_log_obj.total_pages
+      let page = this.$store.state.cvlog.search_log_obj.page
+      let total_pages = this.$store.state.cvlog.search_log_obj.total_pages
 
       return 'page: ' + page + '/' + total_pages
     },
-  }),
+
+    viewHeight() {
+      return this.$wood.logViewContainer.windowHeight -
+        this.$wood.logViewContainer.bottomViewHeight -
+        128
+    },
+  },
+
+  mounted() {
+    this.$el.addEventListener('resize', this.resize)
+
+    this.$wood.logViewContainer.rightViewWidth = this.defaultWidth
+  },
+
+  beforeDestroy() {
+    this.$el.removeEventListener('resize', this.resize)
+  },
 
   components: {
-    'logdata-table': LogDataTable,
+    'logdata-table': MainLogDataTable,
     'resizable': ResizableComponent,
     'itemlistbutton': ItemListButton,
   }

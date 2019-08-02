@@ -93,7 +93,6 @@ export default {
           if(j & 1) {
             let charCode = parseInt(_str.substr(j - 1, 2), 16)
             if(charCode >= 0x20 && charCode <= 0x7e) {
-              console.log(String.fromCharCode(charCode))
               chars += String.fromCharCode(charCode)
             }
             else

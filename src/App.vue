@@ -31,11 +31,6 @@
         </v-list-tile>
       </v-list>
     </v-navigation-drawer>
-    <transition name="fadeHeight">
-      <searchresult-container
-        v-if="showSearchContainer"
-        :defaultWidth="700"/>
-    </transition>
 
     <v-toolbar color="indigo" dark fixed app>
       <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
@@ -77,13 +72,15 @@ import DynamicToolBarComponent from '@/components/DynamicToolBarComponent'
 
 import MultiFunctionToolBar from '@/components/MultiFunctionToolBar'
 
-import SearchResultContainer from '@/containers/SearchResultContainer'
-
 import { delay } from '@/utils'
 
 import { mapState } from 'vuex'
 
+import PeckerMixin from '@/mixins/pecker'
+
 export default {
+
+  mixins: [ PeckerMixin ],
 
   data: () => ({
     drawer: null,
@@ -95,7 +92,6 @@ export default {
     'process-progress': ProcessProgress,
     'toolbar-component': DynamicToolBarComponent,
     'popup-messagebox': PopupMessageBox,
-    'searchresult-container': SearchResultContainer,
     'multitoolbar': MultiFunctionToolBar,
   },
   props: {
@@ -165,7 +161,7 @@ export default {
       delay(5000)('retry').then((result) => {
         console.log('retrieve task:' + task_id)
 
-        this.axios.get('/pecker/' +  task_id)
+        this.getTaskStatusPromise(task_id)
         .then(response => {
           // Automatic transforms for JSON data
           console.log(response.data.status)
@@ -202,16 +198,7 @@ export default {
       this.hideProgressBar()
 
       /* trigger pecker task */
-      this.axios.post('/pecker/', {
-        log_id: data.id
-      })
-      .then(response => {
-        console.log(response.data)
-        this.retrieveTaskStatus(response.data.task_id)
-      })
-      .catch(error => {
-        console.log(error)
-      });
+      this.startPeckerTask(data.id)
 
       this.showProgressBar('Analyzing')
     },

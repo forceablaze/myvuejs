@@ -5,14 +5,32 @@
 
     <multitoolbar @search="searchLog"/>
 
-      <logdata-table
-        :style="tableStyleObject"
-        :headers="tableHeaders"
-        :logs="logs"
-        :rowsPerPage="perPageCount"
-        :highlight="highlight"
-        :focus="focus"
+    <searchresult-container
+      v-if="showSearchContainer"
+      :defaultWidth="300"
       />
+
+    <logdata-table
+      :style="tableStyleObject"
+      :headers="tableHeaders"
+      :logs="logs"
+      :rowsPerPage="perPageCount"
+      :highlight="highlight"
+      :focus="focus"
+      @click="logItemClick"
+    />
+
+    <bottomview
+      :defaultHeight="200"
+      :style="bottomViewStyle"
+      ref="bottomView"
+    >
+      <log-component
+        v-if="current_log"
+        :log="current_log"
+      />
+    </bottomview>
+
   </v-container>
 </template>
 
@@ -30,23 +48,48 @@
 import LogComponent from '@/components/LogComponent'
 import SearchDialog from '@/components/SearchDialog'
 import GotoLogDialog from '@/components/GotoLogDialog'
-
 import LogDataTable from '@/components/LogDataTable'
 
 import MultiFunctionToolBar from '@/components/MultiFunctionToolBar'
+import SearchResultContainer from '@/containers/SearchResultContainer'
+import BottomViewContainer from '@/containers/BottomViewContainer'
 
 import { delay } from '@/utils'
 
+/* override the computed priorities data table height and width */
+import DataTable from '@/components/DataTable'
+const MainDataTable = {
+  extends: DataTable,
+
+  computed: {
+    dataTableHeight() {
+      return this.$wood.logViewContainer.windowHeight -
+        this.$wood.logViewContainer.bottomViewHeight -
+        128
+    },
+    dataTableWidth() {
+      return this.$wood.logViewContainer.windowWidth -
+        this.$wood.logViewContainer.rightViewWidth
+    }
+  }
+}
+
+const MainLogDataTable = {
+  extends:  LogDataTable,
+
+  components: {
+    'datatable': MainDataTable,
+  }
+}
+
 export default {
+
   data() {
     return {
       highlight: [],
       highLightIndex:-1,
       focus: undefined,
       perPageCount: 500,
-      tableStyleObject: {
-        paddingTop: "64px",
-      },
       tableHeaders: [
         { text: 'index', value: 'index'},
         { text: 'time', value: 'time' },
@@ -68,6 +111,47 @@ export default {
     logs () {
       return this.$store.state.cvlog.log_obj.logs
     },
+
+    computedTablePaddingRight() {
+      return this.$vuetify.application.left
+    },
+
+    bottomViewStyle() {
+      return {
+        transition: "padding .2s cubic-bezier(.4,0,.2,1)",
+        position: "absolute"
+      }
+    },
+
+    tableStyleObject() {
+      return {
+        top: "128px",
+        position: "fixed",
+        width: "100%",
+        paddingRight: `${this.computedTablePaddingRight}px`,
+
+        transition: "padding .2s cubic-bezier(.4,0,.2,1)"
+      }
+    },
+
+    showLogInfo() {
+
+      if(this.logs === undefined ||
+        this.$store.state.cvlog.current_logid === undefined)
+        return false
+      return true
+    },
+
+    current_log() {
+      if(!this.showLogInfo)
+        return false
+
+      return this.logs[this.$store.state.cvlog.current_logid]
+    },
+
+    showSearchContainer() {
+      return this.$store.state.searchcontainer.show
+    },
   },
 
   watch: {
@@ -75,11 +159,24 @@ export default {
       console.log(to.query)
       this.fetchLog((this.page - 1) * this.perPageCount)
     },
+
     'window.scrollY' (to) {
       console.log('scroll height changed:' + to)
+    },
+
+    showSearchContainer(show) {
+      if(!show)
+        this.$wood.logViewContainer.rightViewWidth = 0
     }
   },
   methods: {
+
+    logItemClick(idx) {
+      console.log(idx)
+      this.$store.dispatch('UPDATE_CVLOG_CURRENT_LOGID',
+        { 'logid': idx }
+      )
+    },
 
     updateExportProgress(ratio) {
       this.$store.dispatch('UPDATE_EXPORT_PROGRESS',
@@ -192,8 +289,9 @@ export default {
         this.$router.push({ name: 'log_view',
           params: {
             task_id: this.task_id,
-          page: gotoPage
-        }})
+            page: gotoPage
+          },
+        })
       }
       else
       {
@@ -204,6 +302,10 @@ export default {
         })
       } 
       this.focus = Number(index)
+
+      this.$store.dispatch('UPDATE_CVLOG_CURRENT_LOGID',
+        { 'logid': this.focus }
+      )
     },
 
     showPopupMessageBox(message) {
@@ -412,31 +514,44 @@ export default {
         ]})
     },
 
+    handleResize() {
+      this.$wood.logViewContainer.windowHeight = window.innerHeight
+      this.$wood.logViewContainer.windowWidth = this.$el.clientWidth
+    },
   },
 
   ready: function () {
   },
 
-  beforeDestroy: function () {
-  },
-
   mounted() {
     console.log('fetch cvlog')
     this.fetchLog((this.page - 1) * this.perPageCount)
+
+    this.$nextTick().then(() => {
+      this.handleResize()
+    })
+  },
+
+  beforeDestroy() {
+    window.removeEventListener('resize', this.handleResize)
   },
 
   created() {
     this.$eventHub.$on('search-log-item-click', (idx) => {
       this.gotoLog(idx)
     })
+
+    window.addEventListener('resize', this.handleResize)
   },
 
   components: {
     LogComponent,
     SearchDialog,
     GotoLogDialog,
-    'logdata-table': LogDataTable,
+    'logdata-table': MainLogDataTable,
     'multitoolbar': MultiFunctionToolBar,
+    'searchresult-container': SearchResultContainer,
+    'bottomview': BottomViewContainer,
   }
 }
 

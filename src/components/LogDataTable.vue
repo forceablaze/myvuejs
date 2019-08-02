@@ -1,4 +1,5 @@
 <template>
+        <!--
         <v-data-table
           class="logtable"
           ref="table"
@@ -25,16 +26,50 @@
               <td>{{ getLogSummaryString(props.item) }}</td>
             </tr>
           </template>
-          <template v-if="!simple" v-slot:expand="props">
-            <log-component
-              :log="props.item"
-            >
-           </log-component>
-          </template>
         </v-data-table>
+          -->
+  <datatable
+    class="logtable"
+    :headers="headers"
+  >
+    <template v-slot:item>
+      <tr
+        class="logitem"
+        @click="itemClicked(index)"
+        v-for="(item, index) in logs"
+        v-bind:id="'log_' + `${item.index}`"
+        v-bind:style="[highlight[index] ? { 'background-color': '#FF3333' } : { 'background-color': '#CBFFD3' }]"
+      >
+        <td style="min-width: 40px">{{ item.index }}</td>
+        <td v-if="!simple">{{ item.time }}</td>
+        <td v-if="checkAPITypeIsNotNumber(item.apitype)">{{ item.apitype }}</td>
+        <td v-else>{{ 'PF ' + item.own_domain + '/' + item.own_subsys  }}</td>
+        <td v-if="!simple">{{ item.flag }}</td>
+        <td v-if="!simple">{{ item.direction }}</td>
+        <td v-if="!simple">{{ item.logid }}</td>
+        <td>{{ getLogSummaryString(item) }}</td>
+      </tr>
+    </template>
+  </datatable>
 </template>
 
-<style>
+<style scoped>
+
+.logtable {
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+}
+
+.logtable td {
+  padding-right: 20px;
+  padding-left: 20px;
+  text-align: left;
+}
+
+.logtable .logitem {
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
 
 .logtable table.v-table tbody td, table.v-table tbody th {
   height: auto;
@@ -44,14 +79,25 @@
   height: auto;
 }
 
+.logtable .v-table__overflow {
+    width: 100%;
+    height: 400px;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
 </style>
 
 <script>
 
 import LogComponent from '@/components/LogComponent'
+//import { VDataTable } from '@/components/VDataTable'
+
+import DataTable from '@/components/DataTable'
 
 export default {
   name: 'logdata-table',
+
   data() {
     return  {
       rowsPerPageItems: [{text: 'All', value: -1}],
@@ -71,6 +117,13 @@ export default {
       type: Boolean,
       default: false
     }
+  },
+
+  computed: {
+    computedTablePaddingRight() {
+      console.log(this.$vuetify.application.height)
+      return this.$vuetify.application.left
+    },
   },
 
   watch: {
@@ -107,17 +160,20 @@ export default {
       return isNaN(Number(apitype))
     },
 
+    itemClicked(index) {
+      this.$emit('click', index)
+    },
+
+    /*
     itemClicked(props) {
       props.expanded = !props.expanded
       this.$emit('click', props.item.index)
     },
+    */
 
     focusTo(index) {
       const focusLogElem = this.$el.querySelector("#log_" + index)
-      window.scrollTo({
-        top: focusLogElem.offsetTop,
-        behavior: 'smooth'
-      })
+      focusLogElem.scrollIntoView({behavior: "smooth", block: "center"});
     },
 
     showAllLog() {
@@ -140,6 +196,7 @@ export default {
 
   components: {
     LogComponent,
+    'datatable': DataTable,
   }
 }
 </script>

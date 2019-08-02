@@ -15,6 +15,7 @@
 
       <v-flex sm6>
         <multitext-combobox class="combotext"
+          @enter="search"
           @change="formattedTextChange"/>
       </v-flex>
 
@@ -88,6 +89,7 @@ export default {
         background: '#FFFFFF',
         position: 'fixed',
         paddingRight: `${this.computedPaddingLeft}px`,
+        transition: "padding .2s cubic-bezier(.4,0,.2,1)",
         borderBottom: "1px solid #ccc",
         zIndex: '2',
       }
@@ -104,7 +106,7 @@ export default {
         return { text: v.text }
       })
 
-      this.search()
+      //this.search()
     },
 
     apitypeChange(value) {
@@ -129,18 +131,16 @@ export default {
       let data = {}
 
       let apitype = null
-      if(this.apitypeModel == -1)
-        apitype = { text: this.apitypeValue }
-      else {
-        apitype = this.apitypeItems.filter((e) => {
-          return e.value == this.apitypeModel
-        })[0]
-      }
+
+      apitype = this.apitypeItems.filter((e) => {
+        return e.value == this.apitypeModel
+      })[0]
 
       console.log(this.apitypeModel)
       console.log(this.apitypeValue)
       console.log(apitype.text)
 
+      /* if ALL is not selected */
       if(this.apitypeModel != -2) {
         data.apitype = apitype.text
       }

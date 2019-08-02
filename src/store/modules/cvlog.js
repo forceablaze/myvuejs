@@ -2,13 +2,15 @@ import {
   UPDATE_CVLOG_OBJECT,
   UPDATE_CVLOG_SEARCH_OBJECT,
   UPDATE_CVLOG_SEARCH_TASK_ID,
+  UPDATE_CVLOG_CURRENT_LOGID,
 } from './mutation-types'
 
 export default {
   state: {
     log_obj: {},
     search_log_obj: {},
-    search_task_id: undefined
+    search_task_id: undefined,
+    current_logid: undefined
   },
 
   mutations: {
@@ -25,6 +27,10 @@ export default {
 
     [UPDATE_CVLOG_SEARCH_TASK_ID] (state, { search_task_id }) {
       state.search_task_id = search_task_id
+    },
+
+    [UPDATE_CVLOG_CURRENT_LOGID] (state, { logid }) {
+      state.current_logid = logid
     }
   },
   actions: {
@@ -38,6 +44,11 @@ export default {
 
     [UPDATE_CVLOG_SEARCH_TASK_ID] ({ commit, state }, data) {
       commit(UPDATE_CVLOG_SEARCH_TASK_ID, data)
+    },
+
+    [UPDATE_CVLOG_CURRENT_LOGID] ({ commit, state }, data) {
+      commit(UPDATE_CVLOG_CURRENT_LOGID, data)
     }
+
   }
 }

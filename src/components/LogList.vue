@@ -11,6 +11,7 @@
 <script>
 
 import LogProfile from '@/components/LogProfile'
+import { delay } from '@/utils'
 
 export default {
   data() {
@@ -19,7 +20,7 @@ export default {
       count: 0,
       loading: true,
 
-      logProfileObjs: {},
+      logProfileObjs: null,
       peckerTaskObjs: {},
     }
   },
@@ -37,13 +38,92 @@ export default {
     refreshToolBar() {
       this.$store.dispatch('UPDATE_TOOLBAR_MENU', {
         'title': 'Uploaded Log',
-        'menuComponents': [
-          { 'type': 'icon', 'iconType': 'refresh', 'handler': this.refresh },
-        ]})
+        })
+    },
+
+    async refreshLogProfile() {
+      try {
+        const response = await this.axios.get('/file/')
+
+        this.logProfileObjs = null
+        delete this.logProfileObjs
+
+        // Automatic transforms to JSON data
+        this.logProfileObjs = response.data
+
+      } catch(error) {
+        this.$store.dispatch('SHOW_POPUP_MESSAGE', {
+         'title': error
+        })
+        console.log(error)
+      }
     },
 
     refresh() {
-      this.fetchTaskList()
+      delay(3000)('retry').then( async () => {
+
+
+        await this.refreshLogProfile()
+
+        let taskInfos = undefined
+        try {
+          const response = await this.axios.get('/pecker/')
+          taskInfos = response.data
+
+        } catch(error) {
+          this.$store.dispatch('SHOW_POPUP_MESSAGE', {
+           'title': error
+          })
+          console.log(error)
+        }
+
+        let obj = {}
+        taskInfos.forEach( (task) => {
+          obj[task.task_id] = task
+        })
+
+        for(let key in obj) {
+
+          let found = false
+
+          if(obj[key].search)
+            continue
+
+          /* check current profile is include all of the task */
+          this.profiles.forEach((profile) => {
+            if(profile.id == key) {
+              found = true
+              return
+            }
+          })
+
+          const task = obj[key]
+
+          if(!found) {
+            console.log('push new task')
+
+            let logProfile = this.findLogProfile(task.log_id)
+            let { type, color } = this.checkTaskIconType(task.status)
+
+            this.profiles.unshift({
+              id: task.task_id,
+              logId: task.log_id,
+              title: logProfile.file,
+              file_size: logProfile.file_size,
+              timestamp: logProfile.timestamp,
+              iconType: type,
+              iconColor: color
+            })
+          }
+        }
+
+        this.profiles.forEach( (profile) => {
+          profile.iconType = this.checkTaskIconType(
+            obj[profile.id].status).type
+        });
+
+        this.refresh()
+      })
     },
 
     checkTaskIconType(taskStatus) {
@@ -67,22 +147,6 @@ export default {
       this.profiles = []
 
       try {
-        const response = await this.axios.get('/file/')
-
-        this.logProfileObjs = null
-        delete this.logProfileObjs
-
-      // Automatic transforms for JSON data
-        this.logProfileObjs = response.data
-
-      } catch(error) {
-        this.$store.dispatch('SHOW_POPUP_MESSAGE', {
-         'title': error
-        })
-        console.log(error)
-      }
-
-      try {
         const response = await this.axios.get('/pecker/')
 
         this.peckerTaskObjs = null
@@ -94,7 +158,7 @@ export default {
           let xDate = new Date(x.timestamp)
           let yDate = new Date(y.timestamp)
         
-        // the first the newest
+          // the first the newest
           return yDate - xDate
         })
 
@@ -109,6 +173,7 @@ export default {
 
           this.profiles.push({
             id: task.task_id,
+            logId: task.log_id,
             title: logProfile.file,
             file_size: logProfile.file_size,
             timestamp: logProfile.timestamp,
@@ -122,7 +187,6 @@ export default {
         })
         console.log(error)
       }
-
     }
   },
 
@@ -138,11 +202,15 @@ export default {
 
   mounted() {
     this.refreshToolBar()
-    this.fetchTaskList()
+
+    this.$nextTick( async () => {
+      await this.refreshLogProfile()
+      await this.fetchTaskList()
+      this.refresh()
+    })
   },
 
   beforeDestroy: function () {
-    window.removeEventListener('resize', this.handleResize)
     this.profiles = null
     this.logProfileObjs = null
     this.peckerTaskObjs = null

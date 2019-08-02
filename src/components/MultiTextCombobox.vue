@@ -5,6 +5,8 @@
       :hide-no-data="!search"
       :items="items"
       :search-input.sync="search"
+
+      v-on:keyup.enter="onEnter"
       hide-selected
       label="Free text searching"
       multiple
@@ -143,6 +145,10 @@ export default {
   },
 
   methods: {
+    onEnter() {
+      this.$emit('enter')
+    },
+
     edit (index, item) {
       if (!this.editing) {
         this.editing = item

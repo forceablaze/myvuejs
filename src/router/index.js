@@ -37,7 +37,6 @@ let createRouter = () => {
         },
       ]
     },
-    { path: '/about', name: 'about', component: VirtualScroller },
   ]
 
   const router = new Router({
