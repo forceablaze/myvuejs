@@ -22,6 +22,7 @@ from django.conf import settings
 from pecker.comparelog import isLogParamEqual
 from pecker.comparelog import isLogHasParams
 from pecker.comparelog import filterLogWithParam
+from pecker.comparelog import filterPFTypeLog
 
 import re
 
@@ -110,13 +111,14 @@ def searchFormattedTexts(logs, formattedTexts):
         logs = searchLogText(logs, ['formatted_text', 'text'], formatted['text'])
     return logs
 
-def createPeckerTask(task_id, log_id, search=False):
+def createPeckerTask(task_id, log_id, ref, search=False):
 
     outputUUID = str(uuid.uuid4())
 
     peckerTask = PeckerTask(task_id = task_id,
         status = PeckerTaskStatusToString(PeckerTaskStatus.CREATED),
         log_id = log_id,
+        ref = ref,
         output = outputUUID,
         search = search)
 
@@ -128,11 +130,14 @@ def createPeckerTask(task_id, log_id, search=False):
 
 
 @shared_task(bind=True)
-def search_log_exec(self, log_id, jsonFile, apitype, log_format, text,
+def search_log_exec(self, log_id, task_id, jsonFile, apitype, log_format, text,
         hexString, params_items, formatted_texts, beforeAfter):
 
     taskUUIDStr = search_log_exec.request.id
-    searchTask = createPeckerTask(taskUUIDStr, log_id, search=True)
+
+    searchTask = createPeckerTask(taskUUIDStr,
+            log_id,
+            task_id, search=True)
 
     print('read {}'.format(jsonFile))
 
@@ -149,8 +154,12 @@ def search_log_exec(self, log_id, jsonFile, apitype, log_format, text,
         return Response({'error': 'No file found.'}, status=status.HTTP_200_OK)
      #originLogs = copy.deepcopy(logObj['logs'])
     _logs = logObj['logs']
-    if apitype:
+
+    if apitype == "PF type":
+        _logs = filterPFTypeLog(_logs)
+    elif apitype:
         _logs = filterLogWithParam(_logs, 'apitype', apitype)
+
     if log_format:
         _logs = filterLogWithParam(_logs, 'format', log_format)
 

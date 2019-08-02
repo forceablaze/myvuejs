@@ -40,6 +40,8 @@ class PeckerTask(models.Model):
 
     log_id = models.IntegerField()
 
+    ref = models.CharField(max_length=32, blank=True)
+
     output = models.CharField(max_length=80)
 
     timestamp = models.DateTimeField(auto_now_add=True)

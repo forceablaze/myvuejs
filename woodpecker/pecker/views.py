@@ -28,7 +28,7 @@ from file.models import File
 from .tasks import pecker_exec, add, search_text_task, search_log_exec
 
 CVLOG_CACHE = {}
-CVLOG_CACHE_SIZE = 10
+CVLOG_CACHE_SIZE = 2
 PER_PAGE_COUNT = 200
 
 REVERSE_TABLE = {
@@ -209,8 +209,11 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
 
         jsonFile = self.getLogJsonPath(peckerTask)
 
-        r = search_log_exec.delay(peckerTask.log_id, jsonFile, apitype, logFormat, text,
-            hexs, params, formatted_texts, beforeAfter)
+        r = search_log_exec.delay(
+                peckerTask.log_id,
+                peckerTask.task_id,
+                jsonFile, apitype, logFormat, text,
+                hexs, params, formatted_texts, beforeAfter)
 
         '''
 
@@ -262,7 +265,7 @@ class CVLogSearchView(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPI
 
         parentPeckerTask = None
         try:
-            parentPeckerTask = PeckerTask.objects.get(log_id=peckerTask.log_id, search=False)
+            parentPeckerTask = PeckerTask.objects.get(task_id=peckerTask.ref, search=False)
         except ObjectDoesNotExist:
             print('Invalid log id {}'.format(peckerTask.log_id))
             return HttpResponse(status = status.HTTP_406_NOT_ACCEPTABLE)

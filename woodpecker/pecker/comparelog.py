@@ -29,6 +29,9 @@ def isLogParamEqual(logObj, x_name, value):
 def filterLogWithParam(logObj, x_name, value):
     return list(filter(lambda x: x[x_name] == value, logObj))
 
+def filterPFTypeLog(logObj):
+    return list(filter(lambda x: x['apitype'].isdigit(), logObj))
+
 def isLogHasParams(log, params_items):
 
     # param_name is the symbol tag name
